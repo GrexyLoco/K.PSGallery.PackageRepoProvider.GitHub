@@ -1,7 +1,13 @@
 BeforeAll {
-    # Import the module
+    # Create stub logging functions before sourcing
+    function Write-LogInfo { param($Message) }
+    function Write-LogDebug { param($Message) }
+    function Write-LogError { param($Message) }
+    function Write-LogWarning { param($Message) }
+    
+    # Source the function directly instead of importing module
     $modulePath = Split-Path -Parent $PSScriptRoot
-    Import-Module "$modulePath/K.PSGallery.PackageRepoProvider.GitHub.psd1" -Force
+    . "$modulePath/Private/Invoke-Install.ps1"
     
     # Mock the logging functions
     Mock Write-LogInfo {}

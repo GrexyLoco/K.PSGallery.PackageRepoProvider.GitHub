@@ -52,12 +52,18 @@ function Invoke-RegisterRepo {
         Write-LogInfo "Registering GitHub Packages repository: $RepositoryName"
         Write-LogDebug "Registry URI: $RegistryUri, User: $($Credential.UserName), Secret: ***"
         
+        # Convert PSCredential to PSCredentialInfo
+        $credentialInfo = [Microsoft.PowerShell.PSResourceGet.UtilClasses.PSCredentialInfo]::new(
+            $Credential.UserName,
+            $Credential.Password
+        )
+        
         # PSResourceRepository registrieren
         $registerParams = @{
-            Name       = $RepositoryName
-            Uri        = $RegistryUri
-            Trusted    = $Trusted.IsPresent
-            Credential = $Credential
+            Name           = $RepositoryName
+            Uri            = $RegistryUri
+            Trusted        = $Trusted.IsPresent
+            CredentialInfo = $credentialInfo
         }
         
         Register-PSResourceRepository @registerParams

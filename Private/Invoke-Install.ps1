@@ -63,16 +63,16 @@ function Invoke-Install {
         
         # Version-Parsing (v1, 1.2, 1.2.3)
         $versionParam = if ($Version) {
-            # Entferne 'v'-Prefix falls vorhanden
+            # Remove 'v'-Prefix if present
             $cleanVersion = $Version -replace '^v', ''
             
-            # Prüfe Format
+            # Check format
             if ($cleanVersion -match '^\d+$') {
-                # Major-Latest: 1 → 1.*
+                # Major-Latest: 1 -> 1.*
                 "$cleanVersion.*"
             }
             elseif ($cleanVersion -match '^\d+\.\d+$') {
-                # Minor-Latest: 1.2 → 1.2.*
+                # Minor-Latest: 1.2 -> 1.2.*
                 "$cleanVersion.*"
             }
             else {
