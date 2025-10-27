@@ -43,105 +43,97 @@ BeforeAll {
 }
 
 Describe 'Invoke-Publish' {
+    Context 'API signature validation' {
+        It 'Should have expected parameters' {
+            $command = Get-Command Invoke-Publish
+            $parameters = $command.Parameters.Keys
+            
+            $parameters | Should -Contain 'RepositoryName'
+            $parameters | Should -Contain 'ModulePath'
+            $parameters | Should -Contain 'ModuleName'
+            $parameters | Should -Contain 'Credential'
+            
+            $command.Parameters['RepositoryName'].ParameterType.Name | Should -Be 'String'
+            $command.Parameters['ModulePath'].ParameterType.Name | Should -Be 'String'
+            $command.Parameters['ModuleName'].ParameterType.Name | Should -Be 'String'
+            $command.Parameters['Credential'].ParameterType.Name | Should -Be 'PSCredential'
+        }
+    }
+    
     Context 'Valid module with manifest' {
+        BeforeEach {
+            $script:testCred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
+            $script:repoName = 'TestRepo'
+        }
+        
         It 'Should publish module successfully' {
-            # Arrange
-            $cred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
-            
-            # Act
-            { Invoke-Publish -RepositoryName 'TestRepo' -ModulePath $script:testModuleDir.FullName -Credential $cred } | Should -Not -Throw
-            
-            # Assert
+            { Invoke-Publish -RepositoryName $script:repoName -ModulePath $script:testModuleDir.FullName -Credential $script:testCred } | Should -Not -Throw
             Should -Invoke Publish-PSResource -Times 1 -Exactly
         }
         
         It 'Should log success message' {
-            # Arrange
-            $cred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
-            
-            # Act
-            Invoke-Publish -RepositoryName 'TestRepo' -ModulePath $script:testModuleDir.FullName -Credential $cred
-            
-            # Assert
+            Invoke-Publish -RepositoryName $script:repoName -ModulePath $script:testModuleDir.FullName -Credential $script:testCred
             Should -Invoke Write-LogInfo -Times 2 -Exactly
         }
         
         It 'Should mask credentials in debug log' {
-            # Arrange
-            $cred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
-            
-            # Act
-            Invoke-Publish -RepositoryName 'TestRepo' -ModulePath $script:testModuleDir.FullName -Credential $cred
-            
-            # Assert
+            Invoke-Publish -RepositoryName $script:repoName -ModulePath $script:testModuleDir.FullName -Credential $script:testCred
             Should -Invoke Write-LogDebug -ParameterFilter { $Message -match '\*\*\*' }
         }
         
         It 'Should warn on module name mismatch' {
-            # Arrange
-            $cred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
-            
-            # Act
-            Invoke-Publish -RepositoryName 'TestRepo' -ModulePath $script:testModuleDir.FullName -ModuleName 'DifferentName' -Credential $cred
-            
-            # Assert
+            Invoke-Publish -RepositoryName $script:repoName -ModulePath $script:testModuleDir.FullName -ModuleName 'DifferentName' -Credential $script:testCred
             Should -Invoke Write-LogWarning -Times 1 -Exactly
         }
     }
     
     Context 'Missing module manifest' {
+        BeforeEach {
+            $script:testCred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
+            $script:repoName = 'TestRepo'
+        }
+        
         It 'Should throw error when manifest is missing' {
-            # Arrange
             $emptyDir = New-Item -Path (Join-Path $TestDrive 'EmptyModule') -ItemType Directory -Force
-            $cred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
-            
-            # Act & Assert
-            { Invoke-Publish -RepositoryName 'TestRepo' -ModulePath $emptyDir.FullName -Credential $cred } | Should -Throw
+            { Invoke-Publish -RepositoryName $script:repoName -ModulePath $emptyDir.FullName -Credential $script:testCred } | Should -Throw
         }
         
         It 'Should not call Publish-PSResource when manifest is missing' {
-            # Arrange
             $emptyDir = New-Item -Path (Join-Path $TestDrive 'EmptyModule2') -ItemType Directory -Force
-            $cred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
             
-            # Act
             try {
-                Invoke-Publish -RepositoryName 'TestRepo' -ModulePath $emptyDir.FullName -Credential $cred
+                Invoke-Publish -RepositoryName $script:repoName -ModulePath $emptyDir.FullName -Credential $script:testCred
             }
             catch {
                 # Expected to throw
             }
             
-            # Assert - Reset invoke count for this specific test
             Should -Invoke Publish-PSResource -Times 0 -Exactly -Scope It
         }
         
         It 'Should log error message when manifest is missing' {
-            # Arrange
             $emptyDir = New-Item -Path (Join-Path $TestDrive 'EmptyModule3') -ItemType Directory -Force
-            $cred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
             
-            # Act
             try {
-                Invoke-Publish -RepositoryName 'TestRepo' -ModulePath $emptyDir.FullName -Credential $cred
+                Invoke-Publish -RepositoryName $script:repoName -ModulePath $emptyDir.FullName -Credential $script:testCred
             }
             catch {
                 # Expected to throw
             }
             
-            # Assert
             Should -Invoke Write-LogError -Times 1 -Exactly -Scope It
         }
     }
     
     Context 'Error handling' {
-        It 'Should propagate errors from Publish-PSResource' {
-            # Arrange
+        BeforeEach {
             Mock Publish-PSResource { throw "Publish failed" }
-            $cred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
-            
-            # Act & Assert
-            { Invoke-Publish -RepositoryName 'TestRepo' -ModulePath $script:testModuleDir.FullName -Credential $cred } | Should -Throw
+            $script:testCred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
+            $script:repoName = 'TestRepo'
+        }
+        
+        It 'Should propagate errors from Publish-PSResource' {
+            { Invoke-Publish -RepositoryName $script:repoName -ModulePath $script:testModuleDir.FullName -Credential $script:testCred } | Should -Throw
         }
     }
 }

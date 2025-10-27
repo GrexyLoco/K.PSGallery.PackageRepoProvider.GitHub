@@ -13,6 +13,15 @@
         @{ ModuleName = 'Microsoft.PowerShell.PSResourceGet'; ModuleVersion = '1.0.0' }
     )
     
+    # Load private functions via NestedModules
+    NestedModules = @(
+        'Private/Invoke-RegisterRepo.ps1'
+        'Private/Invoke-Publish.ps1'
+        'Private/Invoke-Install.ps1'
+        'Private/Invoke-Import.ps1'
+        'Private/Invoke-RemoveRepo.ps1'
+    )
+    
     FunctionsToExport = @()
     CmdletsToExport = @()
     VariablesToExport = @()
