@@ -2,9 +2,9 @@
     RootModule = 'K.PSGallery.PackageRepoProvider.GitHub.psm1'
     ModuleVersion = '0.1.0'
     GUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
-    Author = 'GrexyLoco'
-    CompanyName = 'GrexyLoco'
-    Copyright = '(c) GrexyLoco. All rights reserved.'
+    Author = '1d70f'
+    CompanyName = '1d70f'
+    Copyright = '(c) 1d70f. All rights reserved.'
     Description = 'GitHub Packages provider backend for K.PSGallery.PackageRepoProvider. Enables seamless PowerShell module publishing and installation via GitHub Packages NuGet registry.'
     PowerShellVersion = '7.0'
     
