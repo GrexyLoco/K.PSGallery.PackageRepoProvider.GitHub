@@ -92,6 +92,22 @@ function Invoke-Publish {
             Repository = $RepositoryName
             Error = $_.Exception.Message
         }
+        
+        # Diagnostic: Validate manifest to provide detailed error information
+        Write-Host "🔍 Running diagnostic: Test-ModuleManifest..." -ForegroundColor Yellow
+        try {
+            $manifestValidation = Test-ModuleManifest -Path $manifest.FullName -ErrorAction Stop
+            Write-Host "✅ Manifest validation passed:" -ForegroundColor Green
+            Write-Host "   Name: $($manifestValidation.Name)" -ForegroundColor Cyan
+            Write-Host "   Version: $($manifestValidation.Version)" -ForegroundColor Cyan
+            Write-Host "   Author: '$($manifestValidation.Author)'" -ForegroundColor Cyan
+            Write-Host "   Description: $($manifestValidation.Description)" -ForegroundColor Cyan
+            Write-Host "   GUID: $($manifestValidation.Guid)" -ForegroundColor Cyan
+        }
+        catch {
+            Write-Host "❌ Manifest validation failed: $($_.Exception.Message)" -ForegroundColor Red
+        }
+        
         throw
     }
 }
