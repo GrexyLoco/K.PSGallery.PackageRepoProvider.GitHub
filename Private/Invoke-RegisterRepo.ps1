@@ -23,6 +23,9 @@
 .EXAMPLE
     $cred = Get-Credential
     Invoke-RegisterRepo -RepositoryName 'MyGitHubRepo' -RegistryUri 'https://nuget.pkg.github.com/myorg/index.json' -Credential $cred
+.EXAMPLE
+    $token = $GITHUB_TOKEN
+    Invoke-RegisterRepo -RepositoryName 'MyGitHubRepo' -RegistryUri 'https://nuget.pkg.github.com/myorg/index.json' -Token $token -Trusted
 
 .NOTES
     Requires K.PSGallery.LoggingModule and Microsoft.PowerShell.PSResourceGet modules.
