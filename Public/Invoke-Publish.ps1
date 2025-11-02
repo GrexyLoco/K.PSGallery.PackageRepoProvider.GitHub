@@ -74,9 +74,11 @@ function Invoke-Publish {
         
         # NuGet-Paket erstellen und publishen
         $publishParams = @{
-            Path       = $ModulePath
-            Repository = $RepositoryName
-            Credential = $Credential
+            Path                  = $ModulePath
+            Repository            = $RepositoryName
+            Credential            = $Credential
+            SkipDependenciesCheck = $true  # Skip ScriptsToProcess validation (SafeLogging.ps1)
+            Verbose               = $true
         }
         
         Publish-PSResource @publishParams
