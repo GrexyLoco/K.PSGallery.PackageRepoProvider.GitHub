@@ -13,6 +13,10 @@
         @{ ModuleName = 'Microsoft.PowerShell.PSResourceGet'; ModuleVersion = '1.0.0' }
     )
     
+    # Script files (.ps1) that are run in the caller's environment prior to importing this module.
+    # SafeLogging.ps1 provides logging abstraction and must be loaded before the main module
+    ScriptsToProcess = @('Private/SafeLogging.ps1')
+
     # Functions exported by this module (manifest-only strategy)
     FunctionsToExport = @(
         'Invoke-RegisterRepo',
