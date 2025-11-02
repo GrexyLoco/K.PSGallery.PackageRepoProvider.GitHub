@@ -87,12 +87,6 @@ function Invoke-Publish {
         }
     }
     catch {
-        Write-SafeErrorLog -Message "Failed to publish to GitHub Packages: $($_.Exception.Message)" -Additional @{
-            ModulePath = $ModulePath
-            Repository = $RepositoryName
-            Error = $_.Exception.Message
-        }
-        
         # Diagnostic: Validate manifest to provide detailed error information
         Write-Host "🔍 Running diagnostic: Test-ModuleManifest..." -ForegroundColor Yellow
         try {
@@ -106,8 +100,13 @@ function Invoke-Publish {
         }
         catch {
             Write-Host "❌ Manifest validation failed: $($_.Exception.Message)" -ForegroundColor Red
-        }
+        }       
         
+        Write-SafeErrorLog -Message "Failed to publish to GitHub Packages: $($_.Exception.Message)" -Additional @{
+            ModulePath = $ModulePath
+            Repository = $RepositoryName
+            Error = $_.Exception.Message
+        }      
         throw
     }
 }
