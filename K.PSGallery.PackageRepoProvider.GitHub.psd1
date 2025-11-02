@@ -9,7 +9,7 @@
     PowerShellVersion = '7.0'
     
     RequiredModules = @(
-        @{ ModuleName = 'K.PSGallery.LoggingModule'; ModuleVersion = '1.1.48' }
+        # @{ ModuleName = 'K.PSGallery.LoggingModule'; ModuleVersion = '1.1.48' }
         @{ ModuleName = 'Microsoft.PowerShell.PSResourceGet'; ModuleVersion = '1.0.0' }
     )
     
