@@ -59,7 +59,10 @@ function Invoke-Install {
     )
     
     try {
-        Write-LogInfo "Installing module: $ModuleName from repository: $RepositoryName"
+        Write-SafeInfoLog -Message "Installing module: $ModuleName from repository: $RepositoryName" -Additional @{
+            Module = $ModuleName
+            Repository = $RepositoryName
+        }
         
         # Version-Parsing (v1, 1.2, 1.2.3)
         $versionParam = if ($Version) {
@@ -84,7 +87,12 @@ function Invoke-Install {
             $null
         }
         
-        Write-LogDebug "Repository: $RepositoryName, Module: $ModuleName, Version: $($versionParam ?? 'Latest'), Scope: $Scope"
+        Write-SafeDebugLog -Message "Installing with parameters" -Additional @{
+            Repository = $RepositoryName
+            Module = $ModuleName
+            Version = ($versionParam ?? 'Latest')
+            Scope = $Scope
+        }
         
         # Installation
         $installParams = @{
@@ -100,16 +108,25 @@ function Invoke-Install {
         
         Install-PSResource @installParams
         
-        Write-LogInfo "Successfully installed module: $ModuleName"
+        Write-SafeInfoLog -Message "Successfully installed module: $ModuleName" -Additional @{
+            Module = $ModuleName
+            Repository = $RepositoryName
+        }
         
         # Optional: Import after install
         if ($ImportAfterInstall) {
             Import-Module -Name $ModuleName -Force
-            Write-LogInfo "Successfully imported module: $ModuleName"
+            Write-SafeInfoLog -Message "Successfully imported module: $ModuleName" -Additional @{
+                Module = $ModuleName
+            }
         }
     }
     catch {
-        Write-LogError "Failed to install from GitHub Packages: $($_.Exception.Message)"
+        Write-SafeErrorLog -Message "Failed to install from GitHub Packages: $($_.Exception.Message)" -Additional @{
+            Module = $ModuleName
+            Repository = $RepositoryName
+            Error = $_.Exception.Message
+        }
         throw
     }
 }

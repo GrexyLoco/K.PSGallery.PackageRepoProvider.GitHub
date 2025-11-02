@@ -52,8 +52,15 @@ function Invoke-RegisterRepo {
         }
         
         # Logging (mit Credential-Maskierung)
-        Write-LogInfo "Registering GitHub Packages repository: $RepositoryName"
-        Write-LogDebug "Registry URI: $RegistryUri, User: $($Credential.UserName), Secret: ***"
+        Write-SafeInfoLog -Message "Registering GitHub Packages repository: $RepositoryName" -Additional @{
+            Repository = $RepositoryName
+            Uri = $RegistryUri.ToString()
+        }
+        Write-SafeDebugLog -Message "Registry authentication configured" -Additional @{
+            Uri = $RegistryUri.ToString()
+            User = $Credential.UserName
+            Secret = '***'
+        }
         
         # Convert PSCredential to PSCredentialInfo
         $credentialInfo = [Microsoft.PowerShell.PSResourceGet.UtilClasses.PSCredentialInfo]::new(
@@ -71,10 +78,17 @@ function Invoke-RegisterRepo {
         
         Register-PSResourceRepository @registerParams
         
-        Write-LogInfo "Successfully registered GitHub Packages repository: $RepositoryName"
+        Write-SafeInfoLog -Message "Successfully registered GitHub Packages repository: $RepositoryName" -Additional @{
+            Repository = $RepositoryName
+            Uri = $RegistryUri.ToString()
+        }
     }
     catch {
-        Write-LogError "Failed to register GitHub Packages repository: $($_.Exception.Message)"
+        Write-SafeErrorLog -Message "Failed to register GitHub Packages repository: $($_.Exception.Message)" -Additional @{
+            Repository = $RepositoryName
+            Uri = $Uri
+            Error = $_.Exception.Message
+        }
         throw
     }
 }

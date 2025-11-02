@@ -55,12 +55,22 @@ function Invoke-Publish {
         if ($ModuleName) {
             $manifestData = Import-PowerShellDataFile $manifest.FullName
             if ($manifestData.RootModule -and $manifestData.RootModule -notmatch $ModuleName) {
-                Write-LogWarning "ModuleName mismatch: Expected '$ModuleName', found '$($manifestData.RootModule)'"
+                Write-SafeWarningLog -Message "ModuleName mismatch: Expected '$ModuleName', found '$($manifestData.RootModule)'" -Additional @{
+                    Expected = $ModuleName
+                    Found = $manifestData.RootModule
+                }
             }
         }
         
-        Write-LogInfo "Publishing module from: $ModulePath to repository: $RepositoryName"
-        Write-LogDebug "Manifest: $($manifest.Name), User: $($Credential.UserName), Secret: ***"
+        Write-SafeInfoLog -Message "Publishing module from: $ModulePath to repository: $RepositoryName" -Additional @{
+            ModulePath = $ModulePath
+            Repository = $RepositoryName
+        }
+        Write-SafeDebugLog -Message "Publish authentication configured" -Additional @{
+            Manifest = $manifest.Name
+            User = $Credential.UserName
+            Secret = '***'
+        }
         
         # NuGet-Paket erstellen und publishen
         $publishParams = @{
@@ -71,10 +81,17 @@ function Invoke-Publish {
         
         Publish-PSResource @publishParams
         
-        Write-LogInfo "Successfully published module to GitHub Packages: $RepositoryName"
+        Write-SafeInfoLog -Message "Successfully published module to GitHub Packages: $RepositoryName" -Additional @{
+            ModulePath = $ModulePath
+            Repository = $RepositoryName
+        }
     }
     catch {
-        Write-LogError "Failed to publish to GitHub Packages: $($_.Exception.Message)"
+        Write-SafeErrorLog -Message "Failed to publish to GitHub Packages: $($_.Exception.Message)" -Additional @{
+            ModulePath = $ModulePath
+            Repository = $RepositoryName
+            Error = $_.Exception.Message
+        }
         throw
     }
 }

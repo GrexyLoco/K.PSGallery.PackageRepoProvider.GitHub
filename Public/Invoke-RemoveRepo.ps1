@@ -27,15 +27,22 @@ function Invoke-RemoveRepo {
     
     try {
         if ($PSCmdlet.ShouldProcess($RepositoryName, "Unregister repository")) {
-            Write-LogInfo "Removing repository: $RepositoryName"
+            Write-SafeInfoLog -Message "Removing repository: $RepositoryName" -Additional @{
+                Repository = $RepositoryName
+            }
             
             Unregister-PSResourceRepository -Name $RepositoryName
             
-            Write-LogInfo "Successfully removed repository: $RepositoryName"
+            Write-SafeInfoLog -Message "Successfully removed repository: $RepositoryName" -Additional @{
+                Repository = $RepositoryName
+            }
         }
     }
     catch {
-        Write-LogError "Failed to remove repository: $($_.Exception.Message)"
+        Write-SafeErrorLog -Message "Failed to remove repository: $($_.Exception.Message)" -Additional @{
+            Repository = $RepositoryName
+            Error = $_.Exception.Message
+        }
         throw
     }
 }

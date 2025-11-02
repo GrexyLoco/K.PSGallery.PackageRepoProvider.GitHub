@@ -42,7 +42,10 @@ function Invoke-Import {
     )
     
     try {
-        Write-SafeInfoLog "Importing module: $($ModuleName ?? $ModulePath)"
+        Write-SafeInfoLog -Message "Importing module: $($ModuleName ?? $ModulePath)" -Additional @{
+            ModuleName = $ModuleName
+            ModulePath = $ModulePath
+        }
         
         $importParams = @{}
         if ($ModuleName) { $importParams['Name'] = $ModuleName }
@@ -52,14 +55,21 @@ function Invoke-Import {
         
         $result = Import-Module @importParams
         
-        Write-SafeInfoLog "Successfully imported module"
+        Write-SafeInfoLog -Message "Successfully imported module" -Additional @{
+            ModuleName = $ModuleName
+            ModulePath = $ModulePath
+        }
         
         if ($PassThru) {
             return $result
         }
     }
     catch {
-        Write-SafeErrorLog "Failed to import module: $($_.Exception.Message)"
+        Write-SafeErrorLog -Message "Failed to import module: $($_.Exception.Message)" -Additional @{
+            ModuleName = $ModuleName
+            ModulePath = $ModulePath
+            Error = $_.Exception.Message
+        }
         throw
     }
 }
