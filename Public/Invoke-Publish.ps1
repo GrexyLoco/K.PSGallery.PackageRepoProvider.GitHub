@@ -73,15 +73,8 @@ function Invoke-Publish {
         }
         
         # NuGet-Paket erstellen und publishen
-        $publishParams = @{
-            Path                  = $ModulePath
-            Repository            = $RepositoryName
-            Credential            = $Credential
-            SkipDependenciesCheck = $true  # Skip ScriptsToProcess validation (SafeLogging.ps1)
-            Verbose               = $true
-        }
-        
-        Publish-PSResource @publishParams
+        # Direct parameter passing (no splatting) - workaround for potential splatting issues
+        Publish-PSResource -Path $ModulePath -Repository $RepositoryName -Credential $Credential -SkipDependenciesCheck -Verbose
         
         Write-SafeInfoLog -Message "Successfully published module to GitHub Packages: $RepositoryName" -Additional @{
             ModulePath = $ModulePath
