@@ -72,6 +72,21 @@ function Invoke-Publish {
             Secret = '***'
         }
         
+        # Diagnostics: Output PSResourceGet version information
+        $psResourceGetModule = Get-Module -Name 'Microsoft.PowerShell.PSResourceGet' -ListAvailable | Sort-Object -Property Version -Descending | Select-Object -First 1
+        $publishPSResourceCmd = Get-Command -Name 'Publish-PSResource' -ErrorAction SilentlyContinue
+        
+        Write-Host "🔍 PSResourceGet Diagnostics:" -ForegroundColor Cyan
+        Write-Host "   Installed Version: $($psResourceGetModule.Version)" -ForegroundColor Cyan
+        Write-Host "   Command Source: $($publishPSResourceCmd.Source)" -ForegroundColor Cyan
+        Write-Host "   Command Version: $($publishPSResourceCmd.Version)" -ForegroundColor Cyan
+        
+        Write-SafeInfoLog -Message "PSResourceGet version check" -Additional @{
+            InstalledVersion = $psResourceGetModule.Version.ToString()
+            CommandSource = $publishPSResourceCmd.Source
+            CommandVersion = $publishPSResourceCmd.Version.ToString()
+        }
+        
         # NuGet-Paket erstellen und publishen
         # Direct parameter passing (no splatting) - workaround for potential splatting issues
         Publish-PSResource -Path $ModulePath -Repository $RepositoryName -Credential $Credential -SkipDependenciesCheck -Verbose
