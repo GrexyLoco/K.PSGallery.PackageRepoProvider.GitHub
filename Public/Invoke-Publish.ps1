@@ -89,7 +89,14 @@ function Invoke-Publish {
         
         # NuGet-Paket erstellen und publishen
         # Direct parameter passing (no splatting) - workaround for potential splatting issues
-        Publish-PSResource -Path $ModulePath -Repository $RepositoryName -Credential $Credential -SkipDependenciesCheck -Verbose
+        # SkipModuleManifestValidate: Workaround for PSResourceGet 1.1.1 PowerShell Runspace bug
+        # Root cause: Utils.ValidateModuleManifest() uses [PowerShell]::Create() runspace to call Test-ModuleManifest
+        #            → PSModuleInfo.Author property is NOT properly deserialized in runspace context (returns empty string)
+        #            → Direct Test-ModuleManifest call works: Author='GrexyLoco' ✅
+        #            → Runspace Test-ModuleManifest call fails: Author='' ❌
+        #            → Code at Utils.cs:1403 checks string.IsNullOrWhiteSpace(psModuleInfoObj.Author) → FALSE POSITIVE!
+        # See: https://github.com/PowerShell/PSResourceGet/blob/master/src/code/Utils.cs#L1388-1403
+        Publish-PSResource -Path $ModulePath -Repository $RepositoryName -Credential $Credential -SkipDependenciesCheck -SkipModuleManifestValidate -Verbose
         
         Write-SafeInfoLog -Message "Successfully published module to GitHub Packages: $RepositoryName" -Additional @{
             ModulePath = $ModulePath
