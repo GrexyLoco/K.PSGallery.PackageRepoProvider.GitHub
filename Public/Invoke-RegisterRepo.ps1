@@ -62,18 +62,13 @@ function Invoke-RegisterRepo {
             Secret = '***'
         }
         
-        # Convert PSCredential to PSCredentialInfo
-        $credentialInfo = [Microsoft.PowerShell.PSResourceGet.UtilClasses.PSCredentialInfo]::new(
-            $Credential.UserName,
-            $Credential.Password
-        )
-        
-        # PSResourceRepository registrieren
+        # Don't pass credentials during registration - they'll be provided at publish time
+        # This avoids the "Vault token does not exist in registry" error in CI/CD
+        # when SecretManagement vault is not configured
         $registerParams = @{
             Name           = $RepositoryName
             Uri            = $RegistryUri
             Trusted        = $Trusted.IsPresent
-            CredentialInfo = $credentialInfo
         }
         
         Register-PSResourceRepository @registerParams
