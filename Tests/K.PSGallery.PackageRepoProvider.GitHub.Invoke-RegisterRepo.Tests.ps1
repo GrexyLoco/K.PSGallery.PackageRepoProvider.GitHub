@@ -51,12 +51,12 @@ Describe 'Invoke-RegisterRepo' {
         
         It 'Should log success message' {
             Invoke-RegisterRepo -RepositoryName $script:repoName -RegistryUri $script:validUri -Credential $script:testCred
-            Should -Invoke Write-LogInfo -Times 2 -Exactly
+            Should -Invoke Write-SafeInfoLog -Times 2 -Exactly
         }
         
         It 'Should mask credentials in debug log' {
             Invoke-RegisterRepo -RepositoryName $script:repoName -RegistryUri $script:validUri -Credential $script:testCred
-            Should -Invoke Write-LogDebug -ParameterFilter { $Message -match '\*\*\*' }
+            Should -Invoke Write-SafeDebugLog -ParameterFilter { $Additional.Secret -eq '***' }
         }
     }
     
@@ -90,7 +90,7 @@ Describe 'Invoke-RegisterRepo' {
                 # Expected to throw
             }
             
-            Should -Invoke Write-LogError -Times 1 -Exactly
+            Should -Invoke Write-SafeErrorLog -Times 1 -Exactly
         }
     }
     
