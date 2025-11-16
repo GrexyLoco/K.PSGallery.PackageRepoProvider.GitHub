@@ -76,10 +76,10 @@ function Invoke-Publish {
         $psResourceGetModule = Get-Module -Name 'Microsoft.PowerShell.PSResourceGet' -ListAvailable | Sort-Object -Property Version -Descending | Select-Object -First 1
         $publishPSResourceCmd = Get-Command -Name 'Publish-PSResource' -ErrorAction SilentlyContinue
         
-        Write-SafeInfoLog "🔍 PSResourceGet Diagnostics:" -ForegroundColor Cyan
-        Write-SafeInfoLog "   Installed Version: $($psResourceGetModule.Version)" -ForegroundColor Cyan
-        Write-SafeInfoLog "   Command Source: $($publishPSResourceCmd.Source)" -ForegroundColor Cyan
-        Write-SafeInfoLog "   Command Version: $($publishPSResourceCmd.Version)" -ForegroundColor Cyan
+        Write-SafeInfoLog "🔍 PSResourceGet Diagnostics:"
+        Write-SafeInfoLog "   Installed Version: $($psResourceGetModule.Version)"
+        Write-SafeInfoLog "   Command Source: $($publishPSResourceCmd.Source)"
+        Write-SafeInfoLog "   Command Version: $($publishPSResourceCmd.Version)"
         
         Write-SafeInfoLog -Message "PSResourceGet version check" -Additional @{
             InstalledVersion = $psResourceGetModule.Version.ToString()
@@ -105,18 +105,18 @@ function Invoke-Publish {
     }
     catch {
         # Diagnostic: Validate manifest to provide detailed error information
-        Write-SafeInfoLog "🔍 Running diagnostic: Test-ModuleManifest..." -ForegroundColor Yellow
+        Write-SafeInfoLog "🔍 Running diagnostic: Test-ModuleManifest..."
         try {
             $manifestValidation = Test-ModuleManifest -Path $manifest.FullName -ErrorAction Stop
-            Write-SafeInfoLog "✅ Manifest validation passed:" -ForegroundColor Green
-            Write-SafeInfoLog "   Name: $($manifestValidation.Name)" -ForegroundColor Cyan
-            Write-SafeInfoLog "   Version: $($manifestValidation.Version)" -ForegroundColor Cyan
-            Write-SafeInfoLog "   Author: '$($manifestValidation.Author)'" -ForegroundColor Cyan
-            Write-SafeInfoLog "   Description: $($manifestValidation.Description)" -ForegroundColor Cyan
-            Write-SafeInfoLog "   GUID: $($manifestValidation.Guid)" -ForegroundColor Cyan
+            Write-SafeInfoLog "✅ Manifest validation passed:"
+            Write-SafeInfoLog "   Name: $($manifestValidation.Name)"
+            Write-SafeInfoLog "   Version: $($manifestValidation.Version)"
+            Write-SafeInfoLog "   Author: '$($manifestValidation.Author)'"
+            Write-SafeInfoLog "   Description: $($manifestValidation.Description)"
+            Write-SafeInfoLog "   GUID: $($manifestValidation.Guid)"
         }
         catch {
-            Write-SafeInfoLog "❌ Manifest validation failed: $($_.Exception.Message)" -ForegroundColor Red
+            Write-SafeInfoLog "❌ Manifest validation failed: $($_.Exception.Message)"
         }       
         
         Write-SafeErrorLog -Message "Failed to publish to GitHub Packages: $($_.Exception.Message)" -Additional @{
