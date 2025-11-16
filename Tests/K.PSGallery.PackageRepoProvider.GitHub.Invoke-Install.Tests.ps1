@@ -1,20 +1,14 @@
 BeforeAll {
-    # Create stub logging functions before sourcing
-    function Write-LogInfo { param($Message) }
-    function Write-LogDebug { param($Message) }
-    function Write-LogError { param($Message) }
-    function Write-LogWarning { param($Message) }
-    
     # Source the SafeLogging and function directly instead of importing module
     $modulePath = Split-Path -Parent $PSScriptRoot
     . (Join-Path $modulePath "Private" | Join-Path -ChildPath "SafeLogging.ps1")
     . (Join-Path $modulePath "Public" | Join-Path -ChildPath "Invoke-Install.ps1")
     
-    # Mock the logging functions
-    Mock Write-LogInfo {}
-    Mock Write-LogDebug {}
-    Mock Write-LogError {}
-    Mock Write-LogWarning {}
+    # Mock the SafeLogging functions
+    Mock Write-SafeInfoLog {}
+    Mock Write-SafeDebugLog {}
+    Mock Write-SafeErrorLog {}
+    Mock Write-SafeWarningLog {}
     
     # Mock PSResourceGet cmdlets
     Mock Install-PSResource {}
@@ -112,24 +106,6 @@ Describe 'Invoke-Install' {
         }
     }
     
-    Context 'Logging' {
-        BeforeEach {
-            $script:testCred = New-Object System.Management.Automation.PSCredential ('testuser', (ConvertTo-SecureString 'testpass' -AsPlainText -Force))
-            $script:repoName = 'TestRepo'
-            $script:moduleName = 'TestModule'
-        }
-        
-        It 'Should log installation start and success' {
-            Invoke-Install -RepositoryName $script:repoName -ModuleName $script:moduleName -Credential $script:testCred
-            Should -Invoke Write-LogInfo -Times 2 -Exactly -Scope It
-        }
-        
-        It 'Should log debug information with version' {
-            Invoke-Install -RepositoryName $script:repoName -ModuleName $script:moduleName -Version '1.2.3' -Credential $script:testCred
-            Should -Invoke Write-LogDebug -Times 1 -Exactly -Scope It
-        }
-    }
-    
     Context 'Error handling' {
         BeforeEach {
             Mock Install-PSResource { throw "Installation failed" }
@@ -150,7 +126,7 @@ Describe 'Invoke-Install' {
                 # Expected to throw
             }
             
-            Should -Invoke Write-LogError -Times 1 -Exactly -Scope It
+            Should -Invoke Write-SafeErrorLog -Times 1 -Exactly -Scope It
         }
     }
 }

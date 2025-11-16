@@ -1,20 +1,14 @@
 BeforeAll {
-    # Create stub logging functions before sourcing
-    function Write-LogInfo { param($Message) }
-    function Write-LogDebug { param($Message) }
-    function Write-LogError { param($Message) }
-    function Write-LogWarning { param($Message) }
-    
     # Source the SafeLogging and function directly instead of importing module
     $modulePath = Split-Path -Parent $PSScriptRoot
     . (Join-Path $modulePath "Private" | Join-Path -ChildPath "SafeLogging.ps1")
     . (Join-Path $modulePath "Public" | Join-Path -ChildPath "Invoke-RegisterRepo.ps1")
     
-    # Mock the logging functions
-    Mock Write-LogInfo {}
-    Mock Write-LogDebug {}
-    Mock Write-LogError {}
-    Mock Write-LogWarning {}
+    # Mock the SafeLogging functions
+    Mock Write-SafeInfoLog {}
+    Mock Write-SafeDebugLog {}
+    Mock Write-SafeErrorLog {}
+    Mock Write-SafeWarningLog {}
     
     # Mock PSResourceGet cmdlets
     Mock Register-PSResourceRepository {}

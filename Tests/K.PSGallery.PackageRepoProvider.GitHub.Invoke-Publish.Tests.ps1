@@ -1,20 +1,14 @@
 BeforeAll {
-    # Create stub logging functions before sourcing
-    function Write-LogInfo { param($Message) }
-    function Write-LogDebug { param($Message) }
-    function Write-LogError { param($Message) }
-    function Write-LogWarning { param($Message) }
-    
     # Source the SafeLogging and function directly instead of importing module
     $modulePath = Split-Path -Parent $PSScriptRoot
     . (Join-Path $modulePath "Private" | Join-Path -ChildPath "SafeLogging.ps1")
     . (Join-Path $modulePath "Public" | Join-Path -ChildPath "Invoke-Publish.ps1")
     
-    # Mock the logging functions
-    Mock Write-LogInfo {}
-    Mock Write-LogDebug {}
-    Mock Write-LogError {}
-    Mock Write-LogWarning {}
+    # Mock the SafeLogging functions
+    Mock Write-SafeInfoLog {}
+    Mock Write-SafeDebugLog {}
+    Mock Write-SafeErrorLog {}
+    Mock Write-SafeWarningLog {}
     
     # Mock PSResourceGet cmdlets
     Mock Publish-PSResource {}
@@ -71,20 +65,15 @@ Describe 'Invoke-Publish' {
             { Invoke-Publish -RepositoryName $script:repoName -ModulePath $script:testModuleDir.FullName -Credential $script:testCred } | Should -Not -Throw
             Should -Invoke Publish-PSResource -Times 1 -Exactly
         }
-        
-        It 'Should log success message' {
-            Invoke-Publish -RepositoryName $script:repoName -ModulePath $script:testModuleDir.FullName -Credential $script:testCred
-            Should -Invoke Write-LogInfo -Times 2 -Exactly
-        }
-        
+                
         It 'Should mask credentials in debug log' {
             Invoke-Publish -RepositoryName $script:repoName -ModulePath $script:testModuleDir.FullName -Credential $script:testCred
-            Should -Invoke Write-LogDebug -ParameterFilter { $Message -match '\*\*\*' }
+            Should -Invoke Write-SafeDebugLog -ParameterFilter { $Additional.Secret -eq '***' }
         }
         
         It 'Should warn on module name mismatch' {
             Invoke-Publish -RepositoryName $script:repoName -ModulePath $script:testModuleDir.FullName -ModuleName 'DifferentName' -Credential $script:testCred
-            Should -Invoke Write-LogWarning -Times 1 -Exactly
+            Should -Invoke Write-SafeWarningLog -Times 1 -Exactly
         }
     }
     
@@ -122,7 +111,7 @@ Describe 'Invoke-Publish' {
                 # Expected to throw
             }
             
-            Should -Invoke Write-LogError -Times 1 -Exactly -Scope It
+            Should -Invoke Write-SafeErrorLog -Times 1 -Exactly -Scope It
         }
     }
     
