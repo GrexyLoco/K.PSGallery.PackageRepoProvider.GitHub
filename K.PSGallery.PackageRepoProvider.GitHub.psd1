@@ -35,7 +35,6 @@
             Tags = @('GitHub', 'Packages', 'NuGet', 'PSGallery', 'Provider')
             LicenseUri = 'https://github.com/GrexyLoco/K.PSGallery.PackageRepoProvider.GitHub/blob/main/LICENSE'
             ProjectUri = 'https://github.com/GrexyLoco/K.PSGallery.PackageRepoProvider.GitHub'
-            IconUri = ''
             ReleaseNotes = 'Initial release of GitHub Packages Provider'
         }
     }
