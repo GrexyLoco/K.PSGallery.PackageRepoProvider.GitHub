@@ -76,15 +76,17 @@ function Invoke-Publish {
         $psResourceGetModule = Get-Module -Name 'Microsoft.PowerShell.PSResourceGet' -ListAvailable | Sort-Object -Property Version -Descending | Select-Object -First 1
         $publishPSResourceCmd = Get-Command -Name 'Publish-PSResource' -ErrorAction SilentlyContinue
         
-        Write-SafeInfoLog "🔍 PSResourceGet Diagnostics:"
-        Write-SafeInfoLog "   Installed Version: $($psResourceGetModule.Version)"
-        Write-SafeInfoLog "   Command Source: $($publishPSResourceCmd.Source)"
-        Write-SafeInfoLog "   Command Version: $($publishPSResourceCmd.Version)"
-        
-        Write-SafeInfoLog -Message "PSResourceGet version check" -Additional @{
-            InstalledVersion = $psResourceGetModule.Version.ToString()
-            CommandSource = $publishPSResourceCmd.Source
-            CommandVersion = $publishPSResourceCmd.Version.ToString()
+        if ($psResourceGetModule -and $publishPSResourceCmd) {
+            Write-SafeInfoLog "🔍 PSResourceGet Diagnostics:"
+            Write-SafeInfoLog "   Installed Version: $($psResourceGetModule.Version)"
+            Write-SafeInfoLog "   Command Source: $($publishPSResourceCmd.Source)"
+            Write-SafeInfoLog "   Command Version: $($publishPSResourceCmd.Version)"
+            
+            Write-SafeInfoLog -Message "PSResourceGet version check" -Additional @{
+                InstalledVersion = if ($psResourceGetModule.Version) { $psResourceGetModule.Version.ToString() } else { 'N/A' }
+                CommandSource = if ($publishPSResourceCmd.Source) { $publishPSResourceCmd.Source } else { 'N/A' }
+                CommandVersion = if ($publishPSResourceCmd.Version) { $publishPSResourceCmd.Version.ToString() } else { 'N/A' }
+            }
         }
         
         # NuGet-Paket erstellen und publishen

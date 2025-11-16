@@ -5,9 +5,10 @@ BeforeAll {
     function Write-LogError { param($Message) }
     function Write-LogWarning { param($Message) }
     
-    # Source the function directly instead of importing module
+    # Source the SafeLogging and function directly instead of importing module
     $modulePath = Split-Path -Parent $PSScriptRoot
-    . "$modulePath/Private/Invoke-RegisterRepo.ps1"
+    . (Join-Path $modulePath "Private" | Join-Path -ChildPath "SafeLogging.ps1")
+    . (Join-Path $modulePath "Public" | Join-Path -ChildPath "Invoke-RegisterRepo.ps1")
     
     # Mock the logging functions
     Mock Write-LogInfo {}

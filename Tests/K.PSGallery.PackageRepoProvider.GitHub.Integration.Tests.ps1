@@ -1,23 +1,20 @@
 BeforeAll {
-    # Create stub logging functions before sourcing
-    function Write-LogInfo { param($Message) }
-    function Write-LogDebug { param($Message) }
-    function Write-LogError { param($Message) }
-    function Write-LogWarning { param($Message) }
-    
-    # Source the functions directly instead of importing module
+    # Source SafeLogging first (provides Write-Safe* functions)
     $modulePath = Split-Path -Parent $PSScriptRoot
-    . "$modulePath/Private/Invoke-RegisterRepo.ps1"
-    . "$modulePath/Private/Invoke-Publish.ps1"
-    . "$modulePath/Private/Invoke-Install.ps1"
-    . "$modulePath/Private/Invoke-Import.ps1"
-    . "$modulePath/Private/Invoke-RemoveRepo.ps1"
+    . "$modulePath/Private/SafeLogging.ps1"
     
-    # Mock the logging functions
-    Mock Write-LogInfo {}
-    Mock Write-LogDebug {}
-    Mock Write-LogError {}
-    Mock Write-LogWarning {}
+    # Source the PUBLIC functions (moved from Private to Public)
+    . "$modulePath/Public/Invoke-RegisterRepo.ps1"
+    . "$modulePath/Public/Invoke-Publish.ps1"
+    . "$modulePath/Public/Invoke-Install.ps1"
+    . "$modulePath/Public/Invoke-Import.ps1"
+    . "$modulePath/Public/Invoke-RemoveRepo.ps1"
+    
+    # Mock the SafeLogging functions (they're already sourced from SafeLogging.ps1)
+    Mock Write-SafeInfoLog {}
+    Mock Write-SafeDebugLog {}
+    Mock Write-SafeErrorLog {}
+    Mock Write-SafeWarningLog {}
     
     # Mock all external cmdlets
     Mock Register-PSResourceRepository {}
