@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Publishes a PowerShell module to GitHub Packages.
 
