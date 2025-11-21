@@ -18,14 +18,14 @@ function Register-BootstrapRepository {
     [CmdletBinding()]
     param()
     
-    Write-Host "📦 Registering GitHub Packages repository for bootstrap..." -ForegroundColor Cyan
+    Write-Information "📦 Registering GitHub Packages repository for bootstrap..." -InformationAction Continue
     
     Register-PSResourceRepository -Name 'GitHubPackages' `
         -Uri 'https://nuget.pkg.github.com/GrexyLoco/index.json' `
         -Trusted `
         -Verbose
     
-    Write-Host "✅ Repository registered" -ForegroundColor Green
+    Write-Information "✅ Repository registered" -InformationAction Continue
 }
 
 function Import-LocalPackageRepoProvider {
@@ -38,12 +38,12 @@ function Import-LocalPackageRepoProvider {
         throw "PackageRepoProvider not found at expected path: $providerPath`nDid the workflow checkout the repository?"
     }
     
-    Write-Host "📦 Importing PackageRepoProvider from LOCAL checkout..." -ForegroundColor Cyan
-    Write-Host "   Path: $providerPath" -ForegroundColor Gray
+    Write-Information "📦 Importing PackageRepoProvider from LOCAL checkout..." -InformationAction Continue
+    Write-Information "   Path: $providerPath" -InformationAction Continue
     
     Import-Module $providerPath -Force -Verbose
     
-    Write-Host "✅ PackageRepoProvider loaded (LOCAL mode)" -ForegroundColor Green
+    Write-Information "✅ PackageRepoProvider loaded (LOCAL mode)" -InformationAction Continue
 }
 
 function Import-LocalGitHubProvider {
@@ -56,19 +56,19 @@ function Import-LocalGitHubProvider {
         throw "GitHub Provider manifest not found at: $githubProviderPath"
     }
     
-    Write-Host "📦 Importing GitHub Provider from LOCAL checkout..." -ForegroundColor Cyan
-    Write-Host "   Path: $githubProviderPath" -ForegroundColor Gray
+    Write-Information "📦 Importing GitHub Provider from LOCAL checkout..." -InformationAction Continue
+    Write-Information "   Path: $githubProviderPath" -InformationAction Continue
     
     Import-Module $githubProviderPath -Force -Verbose
     
-    Write-Host "✅ GitHub Provider loaded (LOCAL mode)" -ForegroundColor Green
+    Write-Information "✅ GitHub Provider loaded (LOCAL mode)" -InformationAction Continue
 }
 
 function Test-ModulesLoaded {
     [CmdletBinding()]
     param()
     
-    Write-Host "🔍 Verifying modules are loaded..." -ForegroundColor Cyan
+    Write-Information "🔍 Verifying modules are loaded..." -InformationAction Continue
     
     $packageRepoProvider = Get-Module -Name 'K.PSGallery.PackageRepoProvider'
     $githubProvider = Get-Module -Name 'K.PSGallery.PackageRepoProvider.GitHub'
@@ -81,27 +81,27 @@ function Test-ModulesLoaded {
         throw "GitHub Provider not loaded!"
     }
     
-    Write-Host "✅ Both modules verified loaded" -ForegroundColor Green
-    Write-Host "   PackageRepoProvider: $($packageRepoProvider.Version)" -ForegroundColor Gray
-    Write-Host "   GitHub Provider: $($githubProvider.Version)" -ForegroundColor Gray
+    Write-Information "✅ Both modules verified loaded" -InformationAction Continue
+    Write-Information "   PackageRepoProvider: $($packageRepoProvider.Version)" -InformationAction Continue
+    Write-Information "   GitHub Provider: $($githubProvider.Version)" -InformationAction Continue
 }
 
 try {
-    Write-Host "🚀 LOCAL Bootstrap Mode - GitHub Provider Publishing" -ForegroundColor Yellow
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
-    Write-Host "⚠️  Phase 2 Bootstrap: Provider publishes itself using LOCAL mode" -ForegroundColor Yellow
-    Write-Host ""
+    Write-Information "🚀 LOCAL Bootstrap Mode - GitHub Provider Publishing" -InformationAction Continue
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
+    Write-Information "⚠️  Phase 2 Bootstrap: Provider publishes itself using LOCAL mode" -InformationAction Continue
+    Write-Information "" -InformationAction Continue
     
     Register-BootstrapRepository
     Import-LocalPackageRepoProvider
     Import-LocalGitHubProvider
     Test-ModulesLoaded
     
-    Write-Host ""
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
-    Write-Host "✅ LOCAL Bootstrap complete - ready to publish!" -ForegroundColor Green
+    Write-Information "" -InformationAction Continue
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
+    Write-Information "✅ LOCAL Bootstrap complete - ready to publish!" -InformationAction Continue
     
 } catch {
-    Write-Host "❌ LOCAL Bootstrap failed: $_" -ForegroundColor Red
+    Write-Information "❌ LOCAL Bootstrap failed: $_" -InformationAction Continue
     throw
 }

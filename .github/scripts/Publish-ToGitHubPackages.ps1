@@ -27,13 +27,13 @@ function Register-GitHubPackagesRepo {
         [SecureString]$Token
     )
     
-    Write-Host "📦 Registering GitHub Packages repository..." -ForegroundColor Cyan
+    Write-Information "📦 Registering GitHub Packages repository..." -InformationAction Continue
     
     $registryUri = 'https://nuget.pkg.github.com/GrexyLoco/index.json'
     
     Register-PackageRepo -Uri $registryUri -SecureToken $Token -Verbose
     
-    Write-Host "✅ Repository registered: $registryUri" -ForegroundColor Green
+    Write-Information "✅ Repository registered: $registryUri" -InformationAction Continue
     return $registryUri
 }
 
@@ -52,13 +52,13 @@ function Publish-GitHubProvider {
     
     $modulePath = Join-Path $PSScriptRoot '..\..'
     
-    Write-Host "📦 Publishing K.PSGallery.PackageRepoProvider.GitHub v$Version..." -ForegroundColor Cyan
-    Write-Host "   Source: $modulePath" -ForegroundColor Gray
-    Write-Host "   Target: $RegistryUri" -ForegroundColor Gray
+    Write-Information "📦 Publishing K.PSGallery.PackageRepoProvider.GitHub v$Version..." -InformationAction Continue
+    Write-Information "   Source: $modulePath" -InformationAction Continue
+    Write-Information "   Target: $RegistryUri" -InformationAction Continue
     
     Publish-Package -Path $modulePath -RegistryUri $RegistryUri -SecureToken $Token -Verbose
     
-    Write-Host "✅ Package published successfully!" -ForegroundColor Green
+    Write-Information "✅ Package published successfully!" -InformationAction Continue
 }
 
 function Write-PublishSummary {
@@ -114,23 +114,23 @@ Install-PSResource -Name K.PSGallery.PackageRepoProvider.GitHub ``
 "@
 
     $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
-    Write-Host "✅ Summary written to GitHub Actions" -ForegroundColor Green
+    Write-Information "✅ Summary written to GitHub Actions" -InformationAction Continue
 }
 
 try {
-    Write-Host "🚀 Publishing GitHub Provider to GitHub Packages" -ForegroundColor Yellow
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
+    Write-Information "🚀 Publishing GitHub Provider to GitHub Packages" -InformationAction Continue
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
     
     $registryUri = Register-GitHubPackagesRepo -Token $SecureToken
     Publish-GitHubProvider -Token $SecureToken -Version $Version -RegistryUri $registryUri
     Write-PublishSummary -Version $Version -RegistryUri $registryUri
     
-    Write-Host ""
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
-    Write-Host "✅ Publish complete! Phase 2 finished." -ForegroundColor Green
+    Write-Information "" -InformationAction Continue
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
+    Write-Information "✅ Publish complete! Phase 2 finished." -InformationAction Continue
     
 } catch {
-    Write-Host "❌ Publish failed: $_" -ForegroundColor Red
-    Write-Host "Stack Trace: $($_.ScriptStackTrace)" -ForegroundColor Red
+    Write-Information "❌ Publish failed: $_" -InformationAction Continue
+    Write-Information "Stack Trace: $($_.ScriptStackTrace)" -InformationAction Continue
     throw
 }
