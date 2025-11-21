@@ -175,7 +175,7 @@ try {
     Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
     # Determine manifest path and read current version
-    $modulePath = Join-Path $PSScriptRoot '..\..\'
+    $modulePath = Join-Path $PSScriptRoot '../..'
     $manifestPath = Join-Path $modulePath 'K.PSGallery.PackageRepoProvider.GitHub.psd1'
     $manifestVersion = Get-ManifestVersion -ManifestPath $manifestPath
     
@@ -184,7 +184,7 @@ try {
     # Determine which version to publish
     $versionToPublish = $manifestVersion
     
-    if (-not [string]::IsNullOrWhiteSpace($Version)) {
+    if ($Version) {
         Write-Host "🔍 Validating provided version: $Version" -ForegroundColor Cyan
         
         # Compare versions
