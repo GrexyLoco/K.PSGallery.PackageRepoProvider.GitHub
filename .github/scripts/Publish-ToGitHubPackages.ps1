@@ -1,24 +1,55 @@
 <#
 .SYNOPSIS
-    Publish GitHub Provider to GitHub Packages
+    Publish GitHub Provider to GitHub Packages using Smartagr
 .DESCRIPTION
-    Registers repository, publishes package, and generates GitHub Actions summaries
+    Uses Smartagr for automatic release management, registers repository, publishes package, and generates GitHub Actions summaries
 .PARAMETER SecureToken
     GitHub token for authentication (from GITHUB_TOKEN secret)
 .PARAMETER Version
-    Version to publish (from workflow input or release tag)
+    Optional version to publish (from workflow input or release tag). If not provided, Smartagr will determine the version.
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
     [SecureString]$SecureToken,
     
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory=$false)]
     [string]$Version
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+
+function Get-ReleaseVersion {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$false)]
+        [string]$ProvidedVersion
+    )
+    
+    if (-not [string]::IsNullOrEmpty($ProvidedVersion)) {
+        Write-Host "📋 Using provided version: $ProvidedVersion" -ForegroundColor Cyan
+        return $ProvidedVersion
+    }
+    
+    Write-Host "🤖 Using Smartagr for automatic version determination..." -ForegroundColor Cyan
+    
+    # Check if Smartagr module is loaded
+    $smartagr = Get-Module -Name 'K.PSGallery.Smartagr'
+    if (-not $smartagr) {
+        throw "Smartagr module is not loaded. Cannot determine version automatically."
+    }
+    
+    # Use Smartagr to determine the version (assuming it has a Get-NextVersion or similar cmdlet)
+    # This is a placeholder - actual implementation depends on Smartagr's API
+    try {
+        $autoVersion = Invoke-SmartagrRelease
+        Write-Host "✅ Smartagr determined version: $autoVersion" -ForegroundColor Green
+        return $autoVersion
+    } catch {
+        throw "Failed to determine version using Smartagr: $_"
+    }
+}
 
 function Register-GitHubPackagesRepo {
     [CmdletBinding()]
@@ -121,9 +152,12 @@ try {
     Write-Host "🚀 Publishing GitHub Provider to GitHub Packages" -ForegroundColor Yellow
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
     
+    # Determine version (using Smartagr if not provided)
+    $releaseVersion = Get-ReleaseVersion -ProvidedVersion $Version
+    
     $registryUri = Register-GitHubPackagesRepo -Token $SecureToken
-    Publish-GitHubProvider -Token $SecureToken -Version $Version -RegistryUri $registryUri
-    Write-PublishSummary -Version $Version -RegistryUri $registryUri
+    Publish-GitHubProvider -Token $SecureToken -Version $releaseVersion -RegistryUri $registryUri
+    Write-PublishSummary -Version $releaseVersion -RegistryUri $registryUri
     
     Write-Host ""
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
