@@ -119,19 +119,19 @@ Install-PSResource -Name K.PSGallery.PackageRepoProvider.GitHub ``
 }
 
 try {
-    Write-Warning "🚀 Publishing GitHub Provider to GitHub Packages"
-    Write-Warning "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Information "🚀 Publishing GitHub Provider to GitHub Packages"
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
     $registryUri = Register-GitHubPackagesRepo -Token $SecureToken
     Publish-GitHubProvider -Token $SecureToken -Version $Version -RegistryUri $registryUri
     Write-PublishSummary -Version $Version -RegistryUri $registryUri
     
     Write-Information ""
-    Write-Warning "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     Write-Information "✅ Publish complete! Phase 2 finished."
     
 } catch {
-    Write-Error "❌ Publish failed: $_"
+    Write-Error "Publish failed: $_"
     Write-Error "Stack Trace: $($_.ScriptStackTrace)"
     throw
 }

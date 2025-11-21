@@ -88,9 +88,9 @@ function Test-ModulesLoaded {
 }
 
 try {
-    Write-Warning "🚀 LOCAL Bootstrap Mode - GitHub Provider Publishing"
-    Write-Warning "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    Write-Warning "⚠️  Phase 2 Bootstrap: Provider publishes itself using LOCAL mode"
+    Write-Information "🚀 LOCAL Bootstrap Mode - GitHub Provider Publishing"
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Warning "Phase 2 Bootstrap: Provider publishes itself using LOCAL mode"
     Write-Information ""
     
     Register-BootstrapRepository
@@ -99,10 +99,10 @@ try {
     Test-ModulesLoaded
     
     Write-Information ""
-    Write-Warning "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     Write-Information "✅ LOCAL Bootstrap complete - ready to publish!"
     
 } catch {
-    Write-Error "❌ LOCAL Bootstrap failed: $_"
+    Write-Error "LOCAL Bootstrap failed: $_"
     throw
 }
