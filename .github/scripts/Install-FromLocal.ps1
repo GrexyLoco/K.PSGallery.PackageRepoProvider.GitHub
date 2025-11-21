@@ -14,25 +14,12 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-function Register-BootstrapRepository {
-    [CmdletBinding()]
-    param()
-    
-    Write-Information "📦 Registering GitHub Packages repository for bootstrap..." -InformationAction Continue
-    
-    Register-PSResourceRepository -Name 'GitHubPackages' `
-        -Uri 'https://nuget.pkg.github.com/GrexyLoco/index.json' `
-        -Trusted `
-        -Verbose
-    
-    Write-Information "✅ Repository registered" -InformationAction Continue
-}
 
 function Import-LocalPackageRepoProvider {
     [CmdletBinding()]
     param()
     
-    $providerPath = Join-Path $PSScriptRoot '..\..\K.PSGallery.PackageRepoProvider\K.PSGallery.PackageRepoProvider.psd1'
+    $providerPath = Join-Path $PSScriptRoot '..\..\..\K.PSGallery.PackageRepoProvider\K.PSGallery.PackageRepoProvider.psd1'
     
     if (-not (Test-Path $providerPath)) {
         throw "PackageRepoProvider not found at expected path: $providerPath`nDid the workflow checkout the repository?"
@@ -50,7 +37,7 @@ function Import-LocalGitHubProvider {
     [CmdletBinding()]
     param()
     
-    $githubProviderPath = Join-Path $PSScriptRoot '..\..\K.PSGallery.PackageRepoProvider.GitHub.psd1'
+    $githubProviderPath = Join-Path (Join-Path $PSScriptRoot '..\..') 'K.PSGallery.PackageRepoProvider.GitHub.psd1'
     
     if (-not (Test-Path $githubProviderPath)) {
         throw "GitHub Provider manifest not found at: $githubProviderPath"
