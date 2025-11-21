@@ -14,14 +14,14 @@ function Import-PesterTestDiscovery {
     [CmdletBinding()]
     param()
     
-    $discoveryPath = Join-Path $PSScriptRoot '..\..\..\K.PSGallery.PesterTestDiscovery\K.PSGallery.PesterTestDiscovery.psd1'
+    $discoveryPath = Join-Path $PSScriptRoot '..\..\..\K.Actions.PesterTestDiscovery\K.Actions.PesterTestDiscovery.psd1'
     
     if (Test-Path $discoveryPath) {
-        Write-Host "🔍 Loading K.PSGallery.PesterTestDiscovery from workspace..." -ForegroundColor Cyan
+        Write-Host "🔍 Loading K.Actions.PesterTestDiscovery from workspace..." -ForegroundColor Cyan
         Import-Module $discoveryPath -Force -Verbose
         return $true
     } else {
-        Write-Host "⚠️  K.PSGallery.PesterTestDiscovery not found - using standard Pester" -ForegroundColor Yellow
+        Write-Host "⚠️  K.Actions.PesterTestDiscovery not found - using standard Pester" -ForegroundColor Yellow
         return $false
     }
 }
