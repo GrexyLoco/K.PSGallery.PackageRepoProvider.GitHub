@@ -2,7 +2,7 @@
 .SYNOPSIS
     Initialize GitHub Actions environment for GitHub Provider pipeline
 .DESCRIPTION
-    Installs PSResourceGet preview and SecretManagement modules required for publishing
+    Installs PSResourceGet preview, SecretManagement, and PSScriptAnalyzer modules required for the pipeline
 #>
 [CmdletBinding()]
 param()
@@ -39,12 +39,23 @@ function Install-SecretManagement {
     Write-Host "✅ SecretManagement installed" -ForegroundColor Green
 }
 
+function Install-PSScriptAnalyzer {
+    [CmdletBinding()]
+    param()
+    
+    Write-Host "🔍 Installing PSScriptAnalyzer..." -ForegroundColor Cyan
+    Install-PSResource -Name PSScriptAnalyzer -Repository PSGallery -Scope CurrentUser -TrustRepository -Verbose
+    
+    Write-Host "✅ PSScriptAnalyzer installed" -ForegroundColor Green
+}
+
 try {
     Write-Host "🚀 Initializing GitHub Provider Pipeline Environment" -ForegroundColor Yellow
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
     
     Install-PSResourceGetPreview
     Install-SecretManagement
+    Install-PSScriptAnalyzer
     
     Write-Host ""
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
