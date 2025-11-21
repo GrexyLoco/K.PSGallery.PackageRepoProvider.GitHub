@@ -14,19 +14,6 @@ param()
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-function Register-BootstrapRepository {
-    [CmdletBinding()]
-    param()
-    
-    Write-Host "📦 Registering GitHub Packages repository for bootstrap..." -ForegroundColor Cyan
-    
-    Register-PSResourceRepository -Name 'GitHubPackages' `
-        -Uri 'https://nuget.pkg.github.com/GrexyLoco/index.json' `
-        -Trusted `
-        -Verbose
-    
-    Write-Host "✅ Repository registered" -ForegroundColor Green
-}
 
 function Import-LocalPackageRepoProvider {
     [CmdletBinding()]
