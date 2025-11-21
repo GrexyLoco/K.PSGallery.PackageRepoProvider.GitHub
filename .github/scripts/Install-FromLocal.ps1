@@ -32,7 +32,7 @@ function Import-LocalPackageRepoProvider {
     [CmdletBinding()]
     param()
     
-    $providerPath = Join-Path $PSScriptRoot '..\..\K.PSGallery.PackageRepoProvider\K.PSGallery.PackageRepoProvider.psd1'
+    $providerPath = Join-Path $PSScriptRoot '..\..\..\K.PSGallery.PackageRepoProvider\K.PSGallery.PackageRepoProvider.psd1'
     
     if (-not (Test-Path $providerPath)) {
         throw "PackageRepoProvider not found at expected path: $providerPath`nDid the workflow checkout the repository?"
