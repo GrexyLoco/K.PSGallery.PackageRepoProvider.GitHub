@@ -52,7 +52,7 @@ function Compare-Versions {
         $v2 = [System.Version]::Parse($Version2)
         return $v1.CompareTo($v2)
     } catch {
-        throw "Invalid version format. Expected format: Major.Minor.Build (e.g., 0.1.0)"
+        throw "Invalid version format. Expected format: Major.Minor[.Build[.Revision]] (e.g., 1.0, 0.1.0, or 1.0.0.0)"
     }
 }
 
@@ -103,7 +103,7 @@ function Publish-GitHubProvider {
         [string]$RegistryUri
     )
     
-    $modulePath = Join-Path $PSScriptRoot '..\..'
+    $modulePath = Join-Path $PSScriptRoot '../..'
     
     Write-Information "📦 Publishing K.PSGallery.PackageRepoProvider.GitHub v$Version..."
     Write-Information "   Source: $modulePath"
