@@ -6,20 +6,72 @@
 .PARAMETER SecureToken
     GitHub token for authentication (from GITHUB_TOKEN secret)
 .PARAMETER Version
-    Version to publish (from workflow input or release tag)
+    Optional version to publish. If provided and higher than manifest version, updates manifest.
+    If not provided, uses the version from the module manifest.
 #>
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
     [SecureString]$SecureToken,
     
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory = $false)]
     [string]$Version
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $InformationPreference = 'Continue'
+
+function Get-ManifestVersion {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ManifestPath
+    )
+    
+    if (-not (Test-Path $ManifestPath)) {
+        throw "Manifest file not found: $ManifestPath"
+    }
+    
+    $manifestData = Import-PowerShellDataFile -Path $ManifestPath
+    return $manifestData.ModuleVersion
+}
+
+function Compare-Versions {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Version1,
+        
+        [Parameter(Mandatory)]
+        [string]$Version2
+    )
+    
+    try {
+        $v1 = [System.Version]::Parse($Version1)
+        $v2 = [System.Version]::Parse($Version2)
+        return $v1.CompareTo($v2)
+    } catch {
+        throw "Invalid version format. Expected format: Major.Minor.Build (e.g., 0.1.0)"
+    }
+}
+
+function Update-ManifestVersion {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ManifestPath,
+        
+        [Parameter(Mandatory)]
+        [string]$NewVersion
+    )
+    
+    Write-Host "📝 Updating manifest version to $NewVersion..." -ForegroundColor Cyan
+    
+    Update-ModuleManifest -Path $ManifestPath -ModuleVersion $NewVersion
+    
+    Write-Host "✅ Manifest updated successfully!" -ForegroundColor Green
+}
 
 function Register-GitHubPackagesRepo {
     [CmdletBinding()]
@@ -122,9 +174,67 @@ try {
     Write-Information "🚀 Publishing GitHub Provider to GitHub Packages"
     Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
+    # Determine manifest path and read current version
+    $modulePath = Join-Path $PSScriptRoot '..\..\'
+    $manifestPath = Join-Path $modulePath 'K.PSGallery.PackageRepoProvider.GitHub.psd1'
+    $manifestVersion = Get-ManifestVersion -ManifestPath $manifestPath
+    
+    Write-Host "📋 Current manifest version: $manifestVersion" -ForegroundColor Gray
+    
+    # Determine which version to publish
+    $versionToPublish = $manifestVersion
+    
+    if (-not [string]::IsNullOrWhiteSpace($Version)) {
+        Write-Host "🔍 Validating provided version: $Version" -ForegroundColor Cyan
+        
+        # Compare versions
+        $comparison = Compare-Versions -Version1 $Version -Version2 $manifestVersion
+        
+        if ($comparison -gt 0) {
+            # Provided version is higher - update manifest
+            Write-Host "✅ Provided version ($Version) is higher than manifest version ($manifestVersion)" -ForegroundColor Green
+            Update-ManifestVersion -ManifestPath $manifestPath -NewVersion $Version
+            $versionToPublish = $Version
+        } elseif ($comparison -eq 0) {
+            # Versions are equal - proceed with manifest version
+            Write-Host "ℹ️  Provided version matches manifest version - proceeding with $manifestVersion" -ForegroundColor Yellow
+        } else {
+            # Provided version is lower - exit with error
+            Write-Host ""
+            Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Red
+            Write-Host "❌ VERSION VALIDATION FAILED" -ForegroundColor Red
+            Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "The provided version ($Version) is LOWER than the current manifest version ($manifestVersion)." -ForegroundColor Red
+            Write-Host ""
+            Write-Host "🔧 Solution Options:" -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "  1️⃣  Provide a HIGHER version number:" -ForegroundColor Cyan
+            Write-Host "      - Update your workflow input to use a version higher than $manifestVersion" -ForegroundColor Gray
+            Write-Host "      - Example: 0.2.0, 0.1.1, or 1.0.0" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "  2️⃣  Use the manifest version:" -ForegroundColor Cyan
+            Write-Host "      - Don't provide a version parameter in the workflow" -ForegroundColor Gray
+            Write-Host "      - The script will automatically use version $manifestVersion from the manifest" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "  3️⃣  Update the manifest first:" -ForegroundColor Cyan
+            Write-Host "      - Manually update ModuleVersion in K.PSGallery.PackageRepoProvider.GitHub.psd1" -ForegroundColor Gray
+            Write-Host "      - Commit the change, then run the workflow again" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Red
+            
+            throw "Version validation failed: Provided version ($Version) must be higher than manifest version ($manifestVersion)"
+        }
+    } else {
+        Write-Host "ℹ️  No version provided - using manifest version: $manifestVersion" -ForegroundColor Cyan
+    }
+    
+    Write-Host "📦 Publishing version: $versionToPublish" -ForegroundColor Green
+    Write-Host ""
+    
     $registryUri = Register-GitHubPackagesRepo -Token $SecureToken
-    Publish-GitHubProvider -Token $SecureToken -Version $Version -RegistryUri $registryUri
-    Write-PublishSummary -Version $Version -RegistryUri $registryUri
+    Publish-GitHubProvider -Token $SecureToken -Version $versionToPublish -RegistryUri $registryUri
+    Write-PublishSummary -Version $versionToPublish -RegistryUri $registryUri
     
     Write-Information ""
     Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
