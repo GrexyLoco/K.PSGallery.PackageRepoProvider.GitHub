@@ -40,14 +40,37 @@ function Get-ReleaseVersion {
         throw "Smartagr module is not loaded. Cannot determine version automatically."
     }
     
-    # Use Smartagr to determine the version (assuming it has a Get-NextVersion or similar cmdlet)
-    # This is a placeholder - actual implementation depends on Smartagr's API
+    # Try to discover and use Smartagr's release cmdlet
+    # Common naming patterns: Invoke-SmartagrRelease, Get-NextVersion, New-Release, etc.
+    $possibleCmdlets = @(
+        'Invoke-SmartagrRelease',
+        'Get-NextVersion',
+        'New-SmartagrRelease',
+        'Get-SmartagrVersion',
+        'Invoke-Release'
+    )
+    
+    $smartagrCmdlet = $null
+    foreach ($cmdletName in $possibleCmdlets) {
+        $cmd = Get-Command -Name $cmdletName -ErrorAction SilentlyContinue
+        if ($cmd) {
+            $smartagrCmdlet = $cmd
+            Write-Host "   Found Smartagr cmdlet: $($cmd.Name)" -ForegroundColor Gray
+            break
+        }
+    }
+    
+    if (-not $smartagrCmdlet) {
+        $exportedCmds = Get-Command -Module K.PSGallery.Smartagr | Select-Object -ExpandProperty Name
+        throw "Could not find Smartagr release cmdlet. Available cmdlets: $($exportedCmds -join ', ')"
+    }
+    
     try {
-        $autoVersion = Invoke-SmartagrRelease
+        $autoVersion = & $smartagrCmdlet.Name
         Write-Host "✅ Smartagr determined version: $autoVersion" -ForegroundColor Green
         return $autoVersion
     } catch {
-        throw "Failed to determine version using Smartagr: $_"
+        throw "Failed to determine version using Smartagr ($($smartagrCmdlet.Name)): $_"
     }
 }
 
