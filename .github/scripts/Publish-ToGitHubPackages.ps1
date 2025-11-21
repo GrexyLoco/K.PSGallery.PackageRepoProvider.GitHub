@@ -20,6 +20,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
 
 function Get-ManifestVersion {
     [CmdletBinding()]
@@ -65,11 +66,11 @@ function Update-ManifestVersion {
         [string]$NewVersion
     )
     
-    Write-Information "📝 Updating manifest version to $NewVersion..." -InformationAction Continue
+    Write-Information "📝 Updating manifest version to $NewVersion..."
     
     Update-ModuleManifest -Path $ManifestPath -ModuleVersion $NewVersion
     
-    Write-Information "✅ Manifest updated successfully!" -InformationAction Continue
+    Write-Information "✅ Manifest updated successfully!"
 }
 
 function Register-GitHubPackagesRepo {
@@ -178,58 +179,58 @@ try {
     $manifestPath = Join-Path $modulePath 'K.PSGallery.PackageRepoProvider.GitHub.psd1'
     $manifestVersion = Get-ManifestVersion -ManifestPath $manifestPath
     
-    Write-Information "📋 Current manifest version: $manifestVersion" -InformationAction Continue
+    Write-Information "📋 Current manifest version: $manifestVersion"
     
     # Determine which version to publish
     $versionToPublish = $manifestVersion
     
     if ($Version) {
-        Write-Information "🔍 Validating provided version: $Version" -InformationAction Continue
+        Write-Information "🔍 Validating provided version: $Version"
         
         # Compare versions
         $comparison = Compare-Versions -Version1 $Version -Version2 $manifestVersion
         
         if ($comparison -gt 0) {
             # Provided version is higher - update manifest
-            Write-Information "✅ Provided version ($Version) is higher than manifest version ($manifestVersion)" -InformationAction Continue
+            Write-Information "✅ Provided version ($Version) is higher than manifest version ($manifestVersion)"
             Update-ManifestVersion -ManifestPath $manifestPath -NewVersion $Version
             $versionToPublish = $Version
         } elseif ($comparison -eq 0) {
             # Versions are equal - proceed with manifest version
-            Write-Information "ℹ️  Provided version matches manifest version - proceeding with $manifestVersion" -InformationAction Continue
+            Write-Information "ℹ️  Provided version matches manifest version - proceeding with $manifestVersion"
         } else {
             # Provided version is lower - exit with error
-            Write-Information "" -InformationAction Continue
-            Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
-            Write-Information "❌ VERSION VALIDATION FAILED" -InformationAction Continue
-            Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
-            Write-Information "" -InformationAction Continue
-            Write-Information "The provided version ($Version) is LOWER than the current manifest version ($manifestVersion)." -InformationAction Continue
-            Write-Information "" -InformationAction Continue
-            Write-Information "🔧 Solution Options:" -InformationAction Continue
-            Write-Information "" -InformationAction Continue
-            Write-Information "  1️⃣  Provide a HIGHER version number:" -InformationAction Continue
-            Write-Information "      - Update your workflow input to use a version higher than $manifestVersion" -InformationAction Continue
-            Write-Information "      - Example: 0.2.0, 0.1.1, or 1.0.0" -InformationAction Continue
-            Write-Information "" -InformationAction Continue
-            Write-Information "  2️⃣  Use the manifest version:" -InformationAction Continue
-            Write-Information "      - Don't provide a version parameter in the workflow" -InformationAction Continue
-            Write-Information "      - The script will automatically use version $manifestVersion from the manifest" -InformationAction Continue
-            Write-Information "" -InformationAction Continue
-            Write-Information "  3️⃣  Update the manifest first:" -InformationAction Continue
-            Write-Information "      - Manually update ModuleVersion in K.PSGallery.PackageRepoProvider.GitHub.psd1" -InformationAction Continue
-            Write-Information "      - Commit the change, then run the workflow again" -InformationAction Continue
-            Write-Information "" -InformationAction Continue
-            Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
+            Write-Information ""
+            Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            Write-Information "❌ VERSION VALIDATION FAILED"
+            Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            Write-Information ""
+            Write-Information "The provided version ($Version) is LOWER than the current manifest version ($manifestVersion)."
+            Write-Information ""
+            Write-Information "🔧 Solution Options:"
+            Write-Information ""
+            Write-Information "  1️⃣  Provide a HIGHER version number:"
+            Write-Information "      - Update your workflow input to use a version higher than $manifestVersion"
+            Write-Information "      - Example: 0.2.0, 0.1.1, or 1.0.0"
+            Write-Information ""
+            Write-Information "  2️⃣  Use the manifest version:"
+            Write-Information "      - Don't provide a version parameter in the workflow"
+            Write-Information "      - The script will automatically use version $manifestVersion from the manifest"
+            Write-Information ""
+            Write-Information "  3️⃣  Update the manifest first:"
+            Write-Information "      - Manually update ModuleVersion in K.PSGallery.PackageRepoProvider.GitHub.psd1"
+            Write-Information "      - Commit the change, then run the workflow again"
+            Write-Information ""
+            Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             
             throw "Version validation failed: Provided version ($Version) must be higher than manifest version ($manifestVersion)"
         }
     } else {
-        Write-Information "ℹ️  No version provided - using manifest version: $manifestVersion" -InformationAction Continue
+        Write-Information "ℹ️  No version provided - using manifest version: $manifestVersion"
     }
     
-    Write-Information "📦 Publishing version: $versionToPublish" -InformationAction Continue
-    Write-Information "" -InformationAction Continue
+    Write-Information "📦 Publishing version: $versionToPublish"
+    Write-Information ""
     
     $registryUri = Register-GitHubPackagesRepo -Token $SecureToken
     Publish-GitHubProvider -Token $SecureToken -Version $versionToPublish -RegistryUri $registryUri
