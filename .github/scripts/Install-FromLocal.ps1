@@ -37,7 +37,7 @@ function Import-LocalGitHubProvider {
     [CmdletBinding()]
     param()
     
-    $githubProviderPath = Join-Path $PSScriptRoot '..\..\K.PSGallery.PackageRepoProvider.GitHub.psd1'
+    $githubProviderPath = Join-Path (Join-Path $PSScriptRoot '..\..') 'K.PSGallery.PackageRepoProvider.GitHub.psd1'
     
     if (-not (Test-Path $githubProviderPath)) {
         throw "GitHub Provider manifest not found at: $githubProviderPath"
