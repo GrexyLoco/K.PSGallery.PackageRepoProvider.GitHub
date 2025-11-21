@@ -2,7 +2,7 @@
 .SYNOPSIS
     Initialize GitHub Actions environment for GitHub Provider pipeline
 .DESCRIPTION
-    Installs PSResourceGet preview and SecretManagement modules required for publishing
+    Installs PSResourceGet preview required for publishing
 #>
 [CmdletBinding()]
 param()
@@ -28,23 +28,11 @@ function Install-PSResourceGetPreview {
     Write-Host "✅ PSResourceGet preview installed" -ForegroundColor Green
 }
 
-function Install-SecretManagement {
-    [CmdletBinding()]
-    param()
-    
-    Write-Host "🔐 Installing SecretManagement modules..." -ForegroundColor Cyan
-    Install-PSResource -Name Microsoft.PowerShell.SecretManagement -Repository PSGallery -Scope CurrentUser -TrustRepository -Verbose
-    Install-PSResource -Name SecretManagement.JustinGrote.CredMan -Repository PSGallery -Scope CurrentUser -TrustRepository -Verbose
-    
-    Write-Host "✅ SecretManagement installed" -ForegroundColor Green
-}
-
 try {
     Write-Host "🚀 Initializing GitHub Provider Pipeline Environment" -ForegroundColor Yellow
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
     
     Install-PSResourceGetPreview
-    Install-SecretManagement
     
     Write-Host ""
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
