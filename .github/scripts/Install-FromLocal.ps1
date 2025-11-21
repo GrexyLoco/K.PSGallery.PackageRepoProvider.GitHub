@@ -13,7 +13,21 @@ param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
 
+function Register-BootstrapRepository {
+    [CmdletBinding()]
+    param()
+    
+    Write-Information "📦 Registering GitHub Packages repository for bootstrap..."
+    
+    Register-PSResourceRepository -Name 'GitHubPackages' `
+        -Uri 'https://nuget.pkg.github.com/GrexyLoco/index.json' `
+        -Trusted `
+        -Verbose
+    
+    Write-Information "✅ Repository registered"
+}
 
 function Import-LocalPackageRepoProvider {
     [CmdletBinding()]
@@ -25,12 +39,12 @@ function Import-LocalPackageRepoProvider {
         throw "PackageRepoProvider not found at expected path: $providerPath`nDid the workflow checkout the repository?"
     }
     
-    Write-Host "📦 Importing PackageRepoProvider from LOCAL checkout..." -ForegroundColor Cyan
-    Write-Host "   Path: $providerPath" -ForegroundColor Gray
+    Write-Information "📦 Importing PackageRepoProvider from LOCAL checkout..."
+    Write-Information "   Path: $providerPath"
     
     Import-Module $providerPath -Force -Verbose
     
-    Write-Host "✅ PackageRepoProvider loaded (LOCAL mode)" -ForegroundColor Green
+    Write-Information "✅ PackageRepoProvider loaded (LOCAL mode)"
 }
 
 function Import-LocalGitHubProvider {
@@ -43,19 +57,19 @@ function Import-LocalGitHubProvider {
         throw "GitHub Provider manifest not found at: $githubProviderPath"
     }
     
-    Write-Host "📦 Importing GitHub Provider from LOCAL checkout..." -ForegroundColor Cyan
-    Write-Host "   Path: $githubProviderPath" -ForegroundColor Gray
+    Write-Information "📦 Importing GitHub Provider from LOCAL checkout..."
+    Write-Information "   Path: $githubProviderPath"
     
     Import-Module $githubProviderPath -Force -Verbose
     
-    Write-Host "✅ GitHub Provider loaded (LOCAL mode)" -ForegroundColor Green
+    Write-Information "✅ GitHub Provider loaded (LOCAL mode)"
 }
 
 function Test-ModulesLoaded {
     [CmdletBinding()]
     param()
     
-    Write-Host "🔍 Verifying modules are loaded..." -ForegroundColor Cyan
+    Write-Information "🔍 Verifying modules are loaded..."
     
     $packageRepoProvider = Get-Module -Name 'K.PSGallery.PackageRepoProvider'
     $githubProvider = Get-Module -Name 'K.PSGallery.PackageRepoProvider.GitHub'
@@ -68,27 +82,27 @@ function Test-ModulesLoaded {
         throw "GitHub Provider not loaded!"
     }
     
-    Write-Host "✅ Both modules verified loaded" -ForegroundColor Green
-    Write-Host "   PackageRepoProvider: $($packageRepoProvider.Version)" -ForegroundColor Gray
-    Write-Host "   GitHub Provider: $($githubProvider.Version)" -ForegroundColor Gray
+    Write-Information "✅ Both modules verified loaded"
+    Write-Information "   PackageRepoProvider: $($packageRepoProvider.Version)"
+    Write-Information "   GitHub Provider: $($githubProvider.Version)"
 }
 
 try {
-    Write-Host "🚀 LOCAL Bootstrap Mode - GitHub Provider Publishing" -ForegroundColor Yellow
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
-    Write-Host "⚠️  Phase 2 Bootstrap: Provider publishes itself using LOCAL mode" -ForegroundColor Yellow
-    Write-Host ""
+    Write-Information "🚀 LOCAL Bootstrap Mode - GitHub Provider Publishing"
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Warning "Phase 2 Bootstrap: Provider publishes itself using LOCAL mode"
+    Write-Information ""
     
     Register-BootstrapRepository
     Import-LocalPackageRepoProvider
     Import-LocalGitHubProvider
     Test-ModulesLoaded
     
-    Write-Host ""
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
-    Write-Host "✅ LOCAL Bootstrap complete - ready to publish!" -ForegroundColor Green
+    Write-Information ""
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Information "✅ LOCAL Bootstrap complete - ready to publish!"
     
 } catch {
-    Write-Host "❌ LOCAL Bootstrap failed: $_" -ForegroundColor Red
+    Write-Error "LOCAL Bootstrap failed: $_"
     throw
 }
