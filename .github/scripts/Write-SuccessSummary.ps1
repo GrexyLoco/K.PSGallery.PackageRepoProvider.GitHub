@@ -63,4 +63,4 @@ Install-PSResource -Name K.PSGallery.PackageRepoProvider.GitHub ``
 "@
 
 $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
-Write-Host "✅ Success summary written" -ForegroundColor Green
+Write-Information "✅ Success summary written" -InformationAction Continue

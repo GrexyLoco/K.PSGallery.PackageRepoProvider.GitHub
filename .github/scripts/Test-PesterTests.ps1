@@ -17,11 +17,11 @@ function Import-PesterTestDiscovery {
     $discoveryPath = Join-Path $PSScriptRoot '..\..\..\K.PSGallery.PesterTestDiscovery\K.PSGallery.PesterTestDiscovery.psd1'
     
     if (Test-Path $discoveryPath) {
-        Write-Host "🔍 Loading K.PSGallery.PesterTestDiscovery from workspace..." -ForegroundColor Cyan
+        Write-Information "🔍 Loading K.PSGallery.PesterTestDiscovery from workspace..." -InformationAction Continue
         Import-Module $discoveryPath -Force -Verbose
         return $true
     } else {
-        Write-Host "⚠️  K.PSGallery.PesterTestDiscovery not found - using standard Pester" -ForegroundColor Yellow
+        Write-Information "⚠️  K.PSGallery.PesterTestDiscovery not found - using standard Pester" -InformationAction Continue
         return $false
     }
 }
@@ -30,7 +30,7 @@ function Invoke-PesterWithDiscovery {
     [CmdletBinding()]
     param()
     
-    Write-Host "🧪 Running Pester with Test Discovery..." -ForegroundColor Cyan
+    Write-Information "🧪 Running Pester with Test Discovery..." -InformationAction Continue
     
     $config = New-PesterConfiguration
     $config.Run.Path = 'Tests'
@@ -44,14 +44,14 @@ function Invoke-PesterWithDiscovery {
         throw "Pester tests failed: $($result.FailedCount) failed out of $($result.TotalCount)"
     }
     
-    Write-Host "✅ All Pester tests passed ($($result.PassedCount)/$($result.TotalCount))" -ForegroundColor Green
+    Write-Information "✅ All Pester tests passed ($($result.PassedCount)/$($result.TotalCount))" -InformationAction Continue
 }
 
 function Invoke-PesterManual {
     [CmdletBinding()]
     param()
     
-    Write-Host "🧪 Running Pester tests (standard)..." -ForegroundColor Cyan
+    Write-Information "🧪 Running Pester tests (standard)..." -InformationAction Continue
     
     $config = New-PesterConfiguration
     $config.Run.Path = 'Tests'
@@ -65,12 +65,12 @@ function Invoke-PesterManual {
         throw "Pester tests failed: $($result.FailedCount) failed out of $($result.TotalCount)"
     }
     
-    Write-Host "✅ All Pester tests passed ($($result.PassedCount)/$($result.TotalCount))" -ForegroundColor Green
+    Write-Information "✅ All Pester tests passed ($($result.PassedCount)/$($result.TotalCount))" -InformationAction Continue
 }
 
 try {
-    Write-Host "🚀 GitHub Provider - Pester Test Execution" -ForegroundColor Yellow
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
+    Write-Information "🚀 GitHub Provider - Pester Test Execution" -InformationAction Continue
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
     
     $hasDiscovery = Import-PesterTestDiscovery
     
@@ -80,11 +80,11 @@ try {
         Invoke-PesterManual
     }
     
-    Write-Host ""
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
-    Write-Host "✅ All tests passed successfully!" -ForegroundColor Green
+    Write-Information "" -InformationAction Continue
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
+    Write-Information "✅ All tests passed successfully!" -InformationAction Continue
     
 } catch {
-    Write-Host "❌ Test execution failed: $_" -ForegroundColor Red
+    Write-Information "❌ Test execution failed: $_" -InformationAction Continue
     throw
 }

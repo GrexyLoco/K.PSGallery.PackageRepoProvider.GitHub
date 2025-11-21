@@ -14,7 +14,7 @@ function Install-PSResourceGetPreview {
     [CmdletBinding()]
     param()
     
-    Write-Host "🔧 Installing Microsoft.PowerShell.PSResourceGet 1.2.0-preview3..." -ForegroundColor Cyan
+    Write-Information "🔧 Installing Microsoft.PowerShell.PSResourceGet 1.2.0-preview3..." -InformationAction Continue
     Install-Module -Name Microsoft.PowerShell.PSResourceGet `
         -RequiredVersion 1.2.0-preview3 `
         -Repository PSGallery `
@@ -25,32 +25,32 @@ function Install-PSResourceGetPreview {
         -Verbose
     
     Import-Module -Name Microsoft.PowerShell.PSResourceGet -Force
-    Write-Host "✅ PSResourceGet preview installed" -ForegroundColor Green
+    Write-Information "✅ PSResourceGet preview installed" -InformationAction Continue
 }
 
 function Install-SecretManagement {
     [CmdletBinding()]
     param()
     
-    Write-Host "🔐 Installing SecretManagement modules..." -ForegroundColor Cyan
+    Write-Information "🔐 Installing SecretManagement modules..." -InformationAction Continue
     Install-PSResource -Name Microsoft.PowerShell.SecretManagement -Repository PSGallery -Scope CurrentUser -TrustRepository -Verbose
     Install-PSResource -Name SecretManagement.JustinGrote.CredMan -Repository PSGallery -Scope CurrentUser -TrustRepository -Verbose
     
-    Write-Host "✅ SecretManagement installed" -ForegroundColor Green
+    Write-Information "✅ SecretManagement installed" -InformationAction Continue
 }
 
 try {
-    Write-Host "🚀 Initializing GitHub Provider Pipeline Environment" -ForegroundColor Yellow
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
+    Write-Information "🚀 Initializing GitHub Provider Pipeline Environment" -InformationAction Continue
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
     
     Install-PSResourceGetPreview
     Install-SecretManagement
     
-    Write-Host ""
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
-    Write-Host "✅ Environment initialization complete!" -ForegroundColor Green
+    Write-Information "" -InformationAction Continue
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -InformationAction Continue
+    Write-Information "✅ Environment initialization complete!" -InformationAction Continue
     
 } catch {
-    Write-Host "❌ Environment initialization failed: $_" -ForegroundColor Red
+    Write-Information "❌ Environment initialization failed: $_" -InformationAction Continue
     throw
 }

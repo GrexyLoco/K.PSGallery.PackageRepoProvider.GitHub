@@ -70,4 +70,4 @@ $ErrorMessage
 "@
 
 $errorSummary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
-Write-Host "❌ Error summary written" -ForegroundColor Red
+Write-Information "❌ Error summary written" -InformationAction Continue
