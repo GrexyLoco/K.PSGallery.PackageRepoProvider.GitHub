@@ -162,7 +162,7 @@ jobs:
           \`\`\`powershell
           # In K.PSGallery.PackageRepoProvider.psd1
           RequiredModules = @(
-              @{ ModuleName = 'K.PSGallery.PackageRepoProvider.GitHub'; ModuleVersion = '0.1.0' }
+              @{ ModuleName = 'K.PSGallery.PackageRepoProvider.GitHub'; ModuleVersion = 'X.X.X' }
           )
           \`\`\`
           
@@ -170,8 +170,8 @@ jobs:
           
           \`\`\`powershell
           # Register repository
-          Register-PSResourceRepository -Name '1d70f-Repo' \\
-            -Uri 'https://nuget.pkg.github.com/GrexyLoco/index.json' \\
+          Register-PSResourceRepository -Name '1d70f-Repo' ``
+            -Uri 'https://nuget.pkg.github.com/GrexyLoco/index.json' ``
             -Trusted
           
           # Install GitHub Provider
