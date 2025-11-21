@@ -51,6 +51,24 @@ function Import-LocalGitHubProvider {
     Write-Host "✅ GitHub Provider loaded (LOCAL mode)" -ForegroundColor Green
 }
 
+function Import-LocalSmartagr {
+    [CmdletBinding()]
+    param()
+    
+    $smartagrPath = Join-Path $PSScriptRoot '..\..\..\K.PSGallery.Smartagr\K.PSGallery.Smartagr.psd1'
+    
+    if (-not (Test-Path $smartagrPath)) {
+        throw "Smartagr not found at expected path: $smartagrPath`nDid the workflow checkout the repository?"
+    }
+    
+    Write-Host "📦 Importing Smartagr from LOCAL checkout..." -ForegroundColor Cyan
+    Write-Host "   Path: $smartagrPath" -ForegroundColor Gray
+    
+    Import-Module $smartagrPath -Force -Verbose
+    
+    Write-Host "✅ Smartagr loaded (LOCAL mode)" -ForegroundColor Green
+}
+
 function Test-ModulesLoaded {
     [CmdletBinding()]
     param()
@@ -59,6 +77,7 @@ function Test-ModulesLoaded {
     
     $packageRepoProvider = Get-Module -Name 'K.PSGallery.PackageRepoProvider'
     $githubProvider = Get-Module -Name 'K.PSGallery.PackageRepoProvider.GitHub'
+    $smartagr = Get-Module -Name 'K.PSGallery.Smartagr'
     
     if (-not $packageRepoProvider) {
         throw "PackageRepoProvider not loaded!"
@@ -68,9 +87,14 @@ function Test-ModulesLoaded {
         throw "GitHub Provider not loaded!"
     }
     
-    Write-Host "✅ Both modules verified loaded" -ForegroundColor Green
+    if (-not $smartagr) {
+        throw "Smartagr not loaded!"
+    }
+    
+    Write-Host "✅ All modules verified loaded" -ForegroundColor Green
     Write-Host "   PackageRepoProvider: $($packageRepoProvider.Version)" -ForegroundColor Gray
     Write-Host "   GitHub Provider: $($githubProvider.Version)" -ForegroundColor Gray
+    Write-Host "   Smartagr: $($smartagr.Version)" -ForegroundColor Gray
 }
 
 try {
@@ -81,6 +105,7 @@ try {
     
     Register-BootstrapRepository
     Import-LocalPackageRepoProvider
+    Import-LocalSmartagr
     Import-LocalGitHubProvider
     Test-ModulesLoaded
     
