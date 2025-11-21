@@ -24,6 +24,7 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
 
 $errorSummary = @"
 # ❌ GitHub Provider Publish Failed
@@ -70,4 +71,4 @@ $ErrorMessage
 "@
 
 $errorSummary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
-Write-Host "❌ Error summary written" -ForegroundColor Red
+Write-Error "❌ Error summary written"
