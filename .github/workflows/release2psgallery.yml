@@ -30,6 +30,13 @@ jobs:
           path: K.PSGallery.PackageRepoProvider
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Checkout PesterTestDiscovery (Bootstrap)
+        uses: actions/checkout@v4
+        with:
+          repository: GrexyLoco/K.Actions.PesterTestDiscovery
+          path: K.Actions.PesterTestDiscovery
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Initialize Environment
         shell: pwsh
         run: |
