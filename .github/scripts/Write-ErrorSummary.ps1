@@ -71,4 +71,4 @@ $ErrorMessage
 "@
 
 $errorSummary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8
-Write-Error "❌ Error summary written"
+Write-Information "Error summary written"
