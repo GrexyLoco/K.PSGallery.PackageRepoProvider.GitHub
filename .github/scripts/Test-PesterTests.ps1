@@ -14,7 +14,7 @@ function Import-PesterTestDiscovery {
     [CmdletBinding()]
     param()
     
-    $discoveryPath = Join-Path $PSScriptRoot '..\..\K.PSGallery.PesterTestDiscovery\K.PSGallery.PesterTestDiscovery.psd1'
+    $discoveryPath = Join-Path $PSScriptRoot '..\..\..\K.PSGallery.PesterTestDiscovery\K.PSGallery.PesterTestDiscovery.psd1'
     
     if (Test-Path $discoveryPath) {
         Write-Host "🔍 Loading K.PSGallery.PesterTestDiscovery from workspace..." -ForegroundColor Cyan
