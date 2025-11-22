@@ -30,11 +30,11 @@ jobs:
           path: K.PSGallery.PackageRepoProvider
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Checkout PesterTestDiscovery (Bootstrap)
+      - name: Checkout PesterTestDiscovery Action
         uses: actions/checkout@v4
         with:
-          repository: GrexyLoco/K.PSGallery.PesterTestDiscovery
-          path: K.PSGallery.PesterTestDiscovery
+          repository: GrexyLoco/K.Actions.PesterTestDiscovery
+          path: ./.github/actions/pester-test-discovery
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Initialize Environment
@@ -44,41 +44,22 @@ jobs:
           ./.github/scripts/Initialize-Environment.ps1
       
       - name: Discover Pester Tests
-        shell: pwsh
-        run: |
-          cd K.PSGallery.PackageRepoProvider.GitHub
-          
-          # Import PesterTestDiscovery module
-          $discoveryPath = '../K.PSGallery.PesterTestDiscovery/K.PSGallery.PesterTestDiscovery.psd1'
-          if (-not (Test-Path $discoveryPath)) {
-            throw "K.PSGallery.PesterTestDiscovery not found at: $discoveryPath"
-          }
-          Import-Module $discoveryPath -Force
-          
-          # Run discovery with GitHubActions output format (sets environment variables)
-          Invoke-TestDiscovery -TestPath 'Tests' -OutputFormat 'GitHubActions' -Detailed
+        id: discover-tests
+        uses: ./.github/actions/pester-test-discovery
+        with:
+          working-directory: K.PSGallery.PackageRepoProvider.GitHub
       
       - name: Run Pester Tests
+        if: steps.discover-tests.outputs.test-files-count > 0
         shell: pwsh
         run: |
           cd K.PSGallery.PackageRepoProvider.GitHub
           
-          # Check if tests were discovered
-          if ($env:test-files-count -eq '0' -or [string]::IsNullOrEmpty($env:test-files-count)) {
-            Write-Output "⚠️  No test files discovered - skipping Pester tests"
-            exit 0
-          }
-          
-          if ([string]::IsNullOrEmpty($env:discovered-paths)) {
-            Write-Output "⚠️  No test paths discovered - skipping Pester tests"
-            exit 0
-          }
-          
-          Write-Output "✅ Found $env:test-files-count test file(s)"
+          Write-Output "✅ Found ${{ steps.discover-tests.outputs.test-files-count }} test file(s)"
           Write-Output "🧪 Running Pester tests on discovered paths..."
           
-          # Run Pester on discovered paths
-          $testPaths = ($env:discovered-paths -split ';') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+          # Run Pester on discovered paths from action output
+          $testPaths = "${{ steps.discover-tests.outputs.discovered-paths }}" -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
           
           $config = New-PesterConfiguration
           $config.Run.Path = $testPaths
