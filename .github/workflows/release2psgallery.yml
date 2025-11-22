@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g., 0.1.0)'
-        required: true
+        description: 'Version to publish (optional, e.g., 0.1.0). If not provided, uses manifest version.'
+        required: false
         type: string
 
 jobs:
@@ -92,7 +92,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Determine version
+          # Determine version from workflow input or release tag
           $version = "${{ github.event.inputs.version }}"
           if ([string]::IsNullOrEmpty($version)) {
             $version = "${{ github.event.release.tag_name }}".TrimStart('v')
@@ -102,9 +102,23 @@ jobs:
           
           try {
             $secureToken = ConvertTo-SecureString -String $env:GITHUB_TOKEN -AsPlainText -Force
-            ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken -Version $version
+            
+            # Only pass -Version parameter if we have a value
+            if ([string]::IsNullOrEmpty($version)) {
+              ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken
+            } else {
+              ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken -Version $version
+            }
           } catch {
             $registryUri = 'https://nuget.pkg.github.com/GrexyLoco/index.json'
+            
+            # Use manifest version for error summary if no version was provided
+            if ([string]::IsNullOrEmpty($version)) {
+              $manifestPath = 'K.PSGallery.PackageRepoProvider.GitHub.psd1'
+              $manifest = Import-PowerShellDataFile -Path $manifestPath
+              $version = $manifest.ModuleVersion
+            }
+            
             ./.github/scripts/Write-ErrorSummary.ps1 -ErrorMessage $_.Exception.Message -Version $version -RegistryUri $registryUri
             throw
           }
