@@ -55,8 +55,8 @@ jobs:
           }
           Import-Module $discoveryPath -Force
           
-          # Run discovery with GitHubActions output format
-          $result = Invoke-TestDiscovery -TestPath 'Tests' -OutputFormat 'GitHubActions' -Detailed
+          # Run discovery with GitHubActions output format (sets environment variables)
+          Invoke-TestDiscovery -TestPath 'Tests' -OutputFormat 'GitHubActions' -Detailed
       
       - name: Run Pester Tests
         shell: pwsh
