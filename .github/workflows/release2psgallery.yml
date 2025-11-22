@@ -30,17 +30,50 @@ jobs:
           path: K.PSGallery.PackageRepoProvider
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Checkout PesterTestDiscovery Action
+        uses: actions/checkout@v4
+        with:
+          repository: GrexyLoco/K.Actions.PesterTestDiscovery
+          path: ./.github/actions/pester-test-discovery
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Initialize Environment
         shell: pwsh
         run: |
           cd K.PSGallery.PackageRepoProvider.GitHub
           ./.github/scripts/Initialize-Environment.ps1
       
+      - name: Discover Pester Tests
+        id: discover-tests
+        uses: ./.github/actions/pester-test-discovery
+        with:
+          working-directory: K.PSGallery.PackageRepoProvider.GitHub
+      
       - name: Run Pester Tests
+        if: steps.discover-tests.outputs.test-files-count != '0'
         shell: pwsh
         run: |
           cd K.PSGallery.PackageRepoProvider.GitHub
-          ./.github/scripts/Test-PesterTests.ps1
+          
+          Write-Output "✅ Found ${{ steps.discover-tests.outputs.test-files-count }} test file(s)"
+          Write-Output "🧪 Running Pester tests on discovered paths..."
+          
+          # Run Pester on discovered paths from action output
+          $testPaths = "${{ steps.discover-tests.outputs.discovered-paths }}" -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+          
+          $config = New-PesterConfiguration
+          $config.Run.Path = $testPaths
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.CodeCoverage.Enabled = $false
+          
+          $result = Invoke-Pester -Configuration $config
+          
+          if ($result.FailedCount -gt 0) {
+            throw "Pester tests failed: $($result.FailedCount) failed out of $($result.TotalCount)"
+          }
+          
+          Write-Output "✅ All Pester tests passed ($($result.PassedCount)/$($result.TotalCount))"
       
       - name: Run Code Quality Analysis
         shell: pwsh
