@@ -78,8 +78,10 @@ jobs:
           Write-Output "🧪 Running Pester tests on discovered paths..."
           
           # Run Pester on discovered paths
+          $testPaths = ($env:discovered-paths -split ';') | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+          
           $config = New-PesterConfiguration
-          $config.Run.Path = $env:discovered-paths -split ';'
+          $config.Run.Path = $testPaths
           $config.Run.PassThru = $true
           $config.Output.Verbosity = 'Detailed'
           $config.CodeCoverage.Enabled = $false
