@@ -50,7 +50,7 @@ jobs:
           working-directory: K.PSGallery.PackageRepoProvider.GitHub
       
       - name: Run Pester Tests
-        if: steps.discover-tests.outputs.test-files-count > 0
+        if: steps.discover-tests.outputs.test-files-count != '0' && steps.discover-tests.outputs.test-files-count != ''
         shell: pwsh
         run: |
           cd K.PSGallery.PackageRepoProvider.GitHub
