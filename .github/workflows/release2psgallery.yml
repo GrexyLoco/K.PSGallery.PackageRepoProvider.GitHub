@@ -69,6 +69,11 @@ jobs:
             exit 0
           }
           
+          if ([string]::IsNullOrEmpty($env:discovered-paths)) {
+            Write-Output "⚠️  No test paths discovered - skipping Pester tests"
+            exit 0
+          }
+          
           Write-Output "✅ Found $env:test-files-count test file(s)"
           Write-Output "🧪 Running Pester tests on discovered paths..."
           
