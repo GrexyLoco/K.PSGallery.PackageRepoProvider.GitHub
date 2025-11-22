@@ -33,8 +33,8 @@ jobs:
       - name: Checkout PesterTestDiscovery (Bootstrap)
         uses: actions/checkout@v4
         with:
-          repository: GrexyLoco/K.Actions.PesterTestDiscovery
-          path: K.Actions.PesterTestDiscovery
+          repository: GrexyLoco/K.PSGallery.PesterTestDiscovery
+          path: K.PSGallery.PesterTestDiscovery
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Initialize Environment
