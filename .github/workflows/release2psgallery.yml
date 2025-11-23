@@ -94,7 +94,7 @@ jobs:
       
       - name: Create Release with Smartagr
         uses: GrexyLoco/K.PSGallery.Smartagr@v1
-        if: success()
+        if: success() && github.event_name != 'release'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ steps.next-version.outputs.version || github.event.inputs.version || github.event.release.tag_name }}
+          version: ${{ steps.next-version.outputs.version || github.event.inputs.version }}
