@@ -1,124 +1,325 @@
-name: Publish GitHub Provider to GitHub Packages
+name: 🚀 Release GitHub Provider
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (optional, e.g., 0.1.0). If not provided, uses manifest version.'
+        description: '📌 Override version (e.g., 0.1.0, leave empty for auto-detection)'
         required: false
         type: string
+        default: ''
+      enable-psgallery-notification:
+        description: '📣 Enable notification to K.PSGallery pipeline'
+        required: false
+        type: boolean
+        default: false
+  pull_request:
+    types: [closed]
+    branches: [master, main]
+
+env:
+  RELEASE_AUTHOR: "github-actions[bot]"
+  RELEASE_EMAIL: "github-actions[bot]@users.noreply.github.com"
+  UBUNTU_VERSION: ${{ vars.UBUNTU_VERSION || 'ubuntu-24.04' }}
+  ENABLE_PSGALLERY_NOTIFICATION: 'false'
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 🔧 BOOTSTRAP - Dependencies die noch nicht als Actions/Packages verfügbar
+  # ═══════════════════════════════════════════════════════════════════════════
+  bootstrap:
+    name: 🔧 Bootstrap Dependencies
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    runs-on: ${{ vars.UBUNTU_VERSION || 'ubuntu-24.04' }}
     steps:
-      - name: Checkout GitHub Provider
+      - name: 📥 Checkout GitHub Provider
         uses: actions/checkout@v4
         with:
-          path: K.PSGallery.PackageRepoProvider.GitHub
-      
-      - name: Checkout PackageRepoProvider (Bootstrap)
+          fetch-depth: 0
+
+      - name: 🔧 Bootstrap PackageRepoProvider
         uses: actions/checkout@v4
         with:
           repository: GrexyLoco/K.PSGallery.PackageRepoProvider
-          path: K.PSGallery.PackageRepoProvider
+          path: .bootstrap/K.PSGallery.PackageRepoProvider
           token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Checkout PesterTestDiscovery Action
+
+      - name: 🔧 Initialize Environment
+        shell: pwsh
+        run: ./.github/scripts/Initialize-Environment.ps1
+
+      - name: 🔧 Install Bootstrap Modules
+        shell: pwsh
+        run: ./.github/scripts/Install-FromLocal.ps1
+
+      - name: ✅ Bootstrap Complete
+        run: |
+          echo "## ✅ Bootstrap Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Dependencies ready for Quality Gate" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 🔐 QUALITY GATE - Security & Tests
+  # ═══════════════════════════════════════════════════════════════════════════
+  quality-gate:
+    name: 🔐 Security & 🧪 Tests
+    needs: bootstrap
+    runs-on: ${{ vars.UBUNTU_VERSION || 'ubuntu-24.04' }}
+    outputs:
+      test-success: ${{ steps.validation.outputs.test-success }}
+      module-name: ${{ steps.discover-module.outputs.module-name }}
+    steps:
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
-          repository: GrexyLoco/K.Actions.PesterTestDiscovery
-          path: ./.github/actions/pester-test-discovery
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Initialize Environment
-        shell: pwsh
-        run: |
-          cd K.PSGallery.PackageRepoProvider.GitHub
-          ./.github/scripts/Initialize-Environment.ps1
-      
-      - name: Discover Pester Tests
-        id: discover-tests
-        uses: ./.github/actions/pester-test-discovery
+          fetch-depth: 0
+
+      - name: 🔧 Re-Bootstrap Dependencies
+        uses: actions/checkout@v4
         with:
-          working-directory: K.PSGallery.PackageRepoProvider.GitHub
-      
-      - name: Run Pester Tests
-        if: steps.discover-tests.outputs.test-files-count != '0'
+          repository: GrexyLoco/K.PSGallery.PackageRepoProvider
+          path: .bootstrap/K.PSGallery.PackageRepoProvider
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 Re-Initialize Environment
         shell: pwsh
         run: |
-          cd K.PSGallery.PackageRepoProvider.GitHub
-          
-          Write-Output "✅ Found ${{ steps.discover-tests.outputs.test-files-count }} test file(s)"
-          Write-Output "🧪 Running Pester tests on discovered paths..."
-          
-          # Run Pester on discovered paths from action output
-          $testPaths = "${{ steps.discover-tests.outputs.discovered-paths }}" -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-          
-          $config = New-PesterConfiguration
-          $config.Run.Path = $testPaths
-          $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Detailed'
-          $config.CodeCoverage.Enabled = $false
-          
-          $result = Invoke-Pester -Configuration $config
-          
-          if ($result.FailedCount -gt 0) {
-            throw "Pester tests failed: $($result.FailedCount) failed out of $($result.TotalCount)"
-          }
-          
-          Write-Output "✅ All Pester tests passed ($($result.PassedCount)/$($result.TotalCount))"
-      
-      - name: Run Code Quality Analysis
-        shell: pwsh
-        run: |
-          cd K.PSGallery.PackageRepoProvider.GitHub
-          ./.github/scripts/Test-CodeQuality.ps1
-      
-      - name: Bootstrap LOCAL Modules
-        shell: pwsh
-        run: |
-          cd K.PSGallery.PackageRepoProvider.GitHub
+          ./.github/scripts/Initialize-Environment.ps1
           ./.github/scripts/Install-FromLocal.ps1
-      
-      - name: Publish to GitHub Packages
+
+      - name: 🔍 Auto-discover module name
+        id: discover-module
+        shell: pwsh
+        run: |
+          $moduleName = "K.PSGallery.PackageRepoProvider.GitHub"
+          "module-name=$moduleName" >> $env:GITHUB_OUTPUT
+          "## 🔍 Module Discovery" >> $env:GITHUB_STEP_SUMMARY
+          "**Module:** ``$moduleName``" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: 🧪 Validate PowerShell Module
+        id: validation
+        uses: GrexyLoco/K.Actions.PSModuleValidation@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          module-name: ${{ steps.discover-module.outputs.module-name }}
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 📦 PREPARE RELEASE - Version Management & PSD1 Update
+  # ═══════════════════════════════════════════════════════════════════════════
+  prepare-release:
+    name: 📦 Prepare Release
+    needs: [bootstrap, quality-gate]
+    runs-on: ${{ vars.UBUNTU_VERSION || 'ubuntu-24.04' }}
+    outputs:
+      new-version: ${{ steps.determine-version.outputs.final-version }}
+      bump-type: ${{ steps.next-version.outputs.bumpType }}
+      should-release: ${{ steps.determine-version.outputs.should-release }}
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 Re-Bootstrap Dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: GrexyLoco/K.PSGallery.PackageRepoProvider
+          path: .bootstrap/K.PSGallery.PackageRepoProvider
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 Re-Initialize Environment
+        shell: pwsh
+        run: |
+          ./.github/scripts/Initialize-Environment.ps1
+          ./.github/scripts/Install-FromLocal.ps1
+
+      - name: ⬆️ Analyze next version
+        id: next-version
+        if: github.event.inputs.version == ''
+        uses: GrexyLoco/K.Actions.NextVersion@latest
+        with:
+          branchName: ${{ github.ref_name }}
+
+      - name: 🔢 Determine final version
+        id: determine-version
+        shell: pwsh
+        run: |
+          $manualVersion = '${{ github.event.inputs.version }}'
+          $autoBumpType = '${{ steps.next-version.outputs.bumpType }}'
+          $autoNewVersion = '${{ steps.next-version.outputs.newVersion }}'
+          
+          if ($manualVersion) {
+            Write-Output "🎯 Manual version override: $manualVersion"
+            "final-version=$manualVersion" >> $env:GITHUB_OUTPUT
+            "should-release=true" >> $env:GITHUB_OUTPUT
+            "## 📌 Manual Version Override" >> $env:GITHUB_STEP_SUMMARY
+            "**Override Version:** ``$manualVersion``" >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            Write-Output "🔍 Auto-detected: $autoNewVersion ($autoBumpType)"
+            "final-version=$autoNewVersion" >> $env:GITHUB_OUTPUT
+            
+            if ($autoBumpType -eq 'none') {
+              "should-release=false" >> $env:GITHUB_OUTPUT
+              "## 🔁 No Release Required" >> $env:GITHUB_STEP_SUMMARY
+              "No version changes detected." >> $env:GITHUB_STEP_SUMMARY
+            } else {
+              "should-release=true" >> $env:GITHUB_OUTPUT
+              "## ⬆️ Version Bump Detected" >> $env:GITHUB_STEP_SUMMARY
+              "**Bump Type:** ``$autoBumpType``" >> $env:GITHUB_STEP_SUMMARY
+              "**New Version:** ``$autoNewVersion``" >> $env:GITHUB_STEP_SUMMARY
+            }
+          }
+
+      - name: 🛑 Skip if no changes
+        if: steps.determine-version.outputs.should-release == 'false'
+        run: |
+          echo "## 🔁 No Release Required" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ No version changes - workflow exits gracefully" >> $GITHUB_STEP_SUMMARY
+          exit 0
+
+      - name: 📝 Update PowerShell Module Version
+        if: steps.determine-version.outputs.should-release == 'true'
+        shell: pwsh
+        run: |
+          $newVersion = '${{ steps.determine-version.outputs.final-version }}'
+          $psd1 = Get-ChildItem -Filter '*.psd1' -File | Select-Object -First 1
+          
+          if ($psd1) {
+            Write-Output "📝 Updating $($psd1.Name) to version $newVersion"
+            Update-ModuleManifest -Path $psd1.FullName -ModuleVersion $newVersion
+            
+            git config user.name "${{ env.RELEASE_AUTHOR }}"
+            git config user.email "${{ env.RELEASE_EMAIL }}"
+            git add $psd1.Name
+            git commit -m "🔖 Update module version to $newVersion [skip ci]"
+            git push origin ${{ github.ref_name }}
+            
+            Write-Output "✅ Version updated and committed" >> $env:GITHUB_STEP_SUMMARY
+          }
+
+      - name: 🔄 Re-fetch after version update
+        if: steps.determine-version.outputs.should-release == 'true'
+        run: |
+          git fetch origin ${{ github.ref_name }}
+          git reset --hard origin/${{ github.ref_name }}
+          echo "✅ Repository state synchronized"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 🚀 GITHUB RELEASE - Draft, Smart Tags, Publish
+  # ═══════════════════════════════════════════════════════════════════════════
+  github-release:
+    name: 🚀 GitHub Release
+    needs: [quality-gate, prepare-release]
+    if: needs.prepare-release.outputs.should-release == 'true'
+    runs-on: ${{ vars.UBUNTU_VERSION || 'ubuntu-24.04' }}
+    outputs:
+      release-created: ${{ steps.create-release.outputs.release-created }}
+      release-tag: ${{ steps.create-release.outputs.release-tag }}
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Create GitHub Release (Draft)
+        id: create-release
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Determine version from workflow input or release tag
-          $version = "${{ github.event.inputs.version }}"
-          if ([string]::IsNullOrEmpty($version)) {
-            $version = "${{ github.event.release.tag_name }}".TrimStart('v')
-          }
+          $version = "${{ needs.prepare-release.outputs.new-version }}"
+          $releaseTag = "v$version"
+          $moduleName = "${{ needs.quality-gate.outputs.module-name }}"
           
-          cd K.PSGallery.PackageRepoProvider.GitHub
+          $releaseNotes = @"
+          ## 🎉 Release $releaseTag
+          
+          ### 🚀 Installation
+          ``````powershell
+          Install-Module -Name $moduleName -RequiredVersion $version
+          ``````
+          "@
+          
+          Set-Content -Path 'release_notes.md' -Value $releaseNotes
+          
+          gh release create $releaseTag `
+            --title "🚀 Release $releaseTag" `
+            --notes-file release_notes.md `
+            --generate-notes `
+            --draft
+          
+          "release-created=true" >> $env:GITHUB_OUTPUT
+          "release-tag=$releaseTag" >> $env:GITHUB_OUTPUT
+          "✅ **Draft release created:** ``$releaseTag``" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: 🏷️ Create Smart Tags
+        if: steps.create-release.outputs.release-created == 'true'
+        shell: pwsh
+        run: |
+          git config user.name "${{ env.RELEASE_AUTHOR }}"
+          git config user.email "${{ env.RELEASE_EMAIL }}"
+          
+          $tag = "${{ steps.create-release.outputs.release-tag }}"
+          git tag -f latest $tag
+          git push -f origin latest
+          
+          Write-Output "✅ **Smart tags created:** ``latest``" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: ✅ Publish GitHub Release
+        if: steps.create-release.outputs.release-created == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "${{ steps.create-release.outputs.release-tag }}" --draft=false --latest
+          echo "🚀 **Release published:** \`${{ steps.create-release.outputs.release-tag }}\`" >> $GITHUB_STEP_SUMMARY
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 📤 PUBLISH TO GITHUB PACKAGES
+  # ═══════════════════════════════════════════════════════════════════════════
+  publish-package:
+    name: 📤 Publish to GitHub Packages
+    needs: [bootstrap, quality-gate, prepare-release, github-release]
+    if: needs.github-release.outputs.release-created == 'true'
+    runs-on: ${{ vars.UBUNTU_VERSION || 'ubuntu-24.04' }}
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Re-Bootstrap Dependencies
+        uses: actions/checkout@v4
+        with:
+          repository: GrexyLoco/K.PSGallery.PackageRepoProvider
+          path: .bootstrap/K.PSGallery.PackageRepoProvider
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 Re-Initialize Environment
+        shell: pwsh
+        run: |
+          ./.github/scripts/Initialize-Environment.ps1
+          ./.github/scripts/Install-FromLocal.ps1
+
+      - name: 📤 Publish to GitHub Packages
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $secureToken = ConvertTo-SecureString -String $env:GITHUB_TOKEN -AsPlainText -Force
+          $version = "${{ needs.prepare-release.outputs.new-version }}"
+          
+          Write-Output "## 📤 Package Publication" >> $env:GITHUB_STEP_SUMMARY
+          Write-Output "**Version:** ``$version``" >> $env:GITHUB_STEP_SUMMARY
           
           try {
-            $secureToken = ConvertTo-SecureString -String $env:GITHUB_TOKEN -AsPlainText -Force
+            ./.github/scripts/Publish-ToGitHubPackages.ps1 `
+              -SecureToken $secureToken `
+              -Version $version
             
-            # Only pass -Version parameter if we have a value
-            if ([string]::IsNullOrEmpty($version)) {
-              ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken
-            } else {
-              ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken -Version $version
-            }
+            Write-Output "✅ **Package published to GitHub Packages**" >> $env:GITHUB_STEP_SUMMARY
           } catch {
-            $registryUri = 'https://nuget.pkg.github.com/GrexyLoco/index.json'
-            
-            # Use manifest version for error summary if no version was provided
-            if ([string]::IsNullOrEmpty($version)) {
-              $manifestPath = 'K.PSGallery.PackageRepoProvider.GitHub.psd1'
-              $manifest = Import-PowerShellDataFile -Path $manifestPath
-              $version = $manifest.ModuleVersion
-            }
-            
-            ./.github/scripts/Write-ErrorSummary.ps1 -ErrorMessage $_.Exception.Message -Version $version -RegistryUri $registryUri
+            Write-Output "❌ **Publish failed:** $($_.Exception.Message)" >> $env:GITHUB_STEP_SUMMARY
             throw
           }
