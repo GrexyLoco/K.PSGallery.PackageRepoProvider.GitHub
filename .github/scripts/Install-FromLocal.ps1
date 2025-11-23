@@ -33,10 +33,17 @@ function Import-LocalPackageRepoProvider {
     [CmdletBinding()]
     param()
     
-    $providerPath = Join-Path $PSScriptRoot '..\..\..\K.PSGallery.PackageRepoProvider\K.PSGallery.PackageRepoProvider.psd1'
+    # Support both local development (sibling repo) and CI/CD (.bootstrap/ subdirectory)
+    $possiblePaths = @(
+        (Join-Path $PSScriptRoot '..\..\..\..\K.PSGallery.PackageRepoProvider\K.PSGallery.PackageRepoProvider.psd1'),  # Local dev: sibling repo
+        (Join-Path $PSScriptRoot '..\..\.bootstrap\K.PSGallery.PackageRepoProvider\K.PSGallery.PackageRepoProvider.psd1')  # CI/CD: workflow checkout
+    )
     
-    if (-not (Test-Path $providerPath)) {
-        throw "PackageRepoProvider not found at expected path: $providerPath`nDid the workflow checkout the repository?"
+    $providerPath = $possiblePaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+    
+    if (-not $providerPath) {
+        $searchedPaths = $possiblePaths -join "`n   - "
+        throw "PackageRepoProvider not found. Searched paths:`n   - $searchedPaths`nDid the workflow checkout the repository to .bootstrap/?"
     }
     
     Write-Information "📦 Importing PackageRepoProvider from LOCAL checkout..."
