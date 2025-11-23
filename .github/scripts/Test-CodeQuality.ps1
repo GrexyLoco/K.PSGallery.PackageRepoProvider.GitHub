@@ -9,6 +9,7 @@ param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
 
 function Test-FolderWithAnalyzer {
     [CmdletBinding()]
@@ -20,18 +21,18 @@ function Test-FolderWithAnalyzer {
         [string]$FolderName
     )
     
-    Write-Host "🔍 Analyzing $FolderName folder..." -ForegroundColor Cyan
+    Write-Information "🔍 Analyzing $FolderName folder..."
     
     $results = Invoke-ScriptAnalyzer -Path $Path -Recurse -Severity Error, Warning
     
     if ($results) {
-        Write-Host "❌ Found $($results.Count) issue(s) in $FolderName" -ForegroundColor Red
+        Write-Warning "Found $($results.Count) issue(s) in $FolderName"
         $results | ForEach-Object {
-            Write-Host "  [$($_.Severity)] $($_.RuleName): $($_.Message) at $($_.ScriptPath):$($_.Line)" -ForegroundColor Yellow
+            Write-Warning "  [$($_.Severity)] $($_.RuleName): $($_.Message) at $($_.ScriptPath):$($_.Line)"
         }
         return $false
     } else {
-        Write-Host "✅ No issues found in $FolderName" -ForegroundColor Green
+        Write-Information "✅ No issues found in $FolderName"
         return $true
     }
 }
@@ -49,13 +50,13 @@ function Test-AllCodeQuality {
     if (Test-Path $publicPath) {
         $publicOK = Test-FolderWithAnalyzer -Path $publicPath -FolderName 'Public'
     } else {
-        Write-Host "⚠️  Public folder not found - skipping" -ForegroundColor Yellow
+        Write-Warning "Public folder not found - skipping"
     }
     
     if (Test-Path $privatePath) {
         $privateOK = Test-FolderWithAnalyzer -Path $privatePath -FolderName 'Private'
     } else {
-        Write-Host "⚠️  Private folder not found - skipping" -ForegroundColor Yellow
+        Write-Warning "Private folder not found - skipping"
     }
     
     if (-not $publicOK -or -not $privateOK) {
@@ -64,16 +65,16 @@ function Test-AllCodeQuality {
 }
 
 try {
-    Write-Host "🚀 GitHub Provider - Code Quality Analysis" -ForegroundColor Yellow
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
+    Write-Information "🚀 GitHub Provider - Code Quality Analysis"
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
     Test-AllCodeQuality
     
-    Write-Host ""
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
-    Write-Host "✅ Code quality validation passed!" -ForegroundColor Green
+    Write-Information ""
+    Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Information "✅ Code quality validation passed!"
     
 } catch {
-    Write-Host "❌ Code quality validation failed: $_" -ForegroundColor Red
+    Write-Error "Code quality validation failed: $_"
     throw
 }

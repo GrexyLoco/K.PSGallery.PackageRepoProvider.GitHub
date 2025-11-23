@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
+        description: 'Version to publish (optional, e.g., 0.1.0). If not provided, uses manifest version or is auto-determined from K.Action.NextVersion.'
         description: 'Version to publish (e.g., 0.1.0). Leave empty to auto-determine from K.Action.NextVersion.'
         required: false
         type: string
@@ -30,17 +31,50 @@ jobs:
           path: K.PSGallery.PackageRepoProvider
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      - name: Checkout PesterTestDiscovery Action
+        uses: actions/checkout@v4
+        with:
+          repository: GrexyLoco/K.Actions.PesterTestDiscovery
+          path: ./.github/actions/pester-test-discovery
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Initialize Environment
         shell: pwsh
         run: |
           cd K.PSGallery.PackageRepoProvider.GitHub
           ./.github/scripts/Initialize-Environment.ps1
       
+      - name: Discover Pester Tests
+        id: discover-tests
+        uses: ./.github/actions/pester-test-discovery
+        with:
+          working-directory: K.PSGallery.PackageRepoProvider.GitHub
+      
       - name: Run Pester Tests
+        if: steps.discover-tests.outputs.test-files-count != '0'
         shell: pwsh
         run: |
           cd K.PSGallery.PackageRepoProvider.GitHub
-          ./.github/scripts/Test-PesterTests.ps1
+          
+          Write-Output "✅ Found ${{ steps.discover-tests.outputs.test-files-count }} test file(s)"
+          Write-Output "🧪 Running Pester tests on discovered paths..."
+          
+          # Run Pester on discovered paths from action output
+          $testPaths = "${{ steps.discover-tests.outputs.discovered-paths }}" -split ';' | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+          
+          $config = New-PesterConfiguration
+          $config.Run.Path = $testPaths
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.CodeCoverage.Enabled = $false
+          
+          $result = Invoke-Pester -Configuration $config
+          
+          if ($result.FailedCount -gt 0) {
+            throw "Pester tests failed: $($result.FailedCount) failed out of $($result.TotalCount)"
+          }
+          
+          Write-Output "✅ All Pester tests passed ($($result.PassedCount)/$($result.TotalCount))"
       
       - name: Run Code Quality Analysis
         shell: pwsh
@@ -67,6 +101,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Determine version from workflow input, release tag, or K.Action.NextVersion
           # Determine version from input, release tag, or K.Action.NextVersion
           $version = "${{ github.event.inputs.version }}"
           if ([string]::IsNullOrEmpty($version)) {
@@ -87,9 +122,23 @@ jobs:
           
           try {
             $secureToken = ConvertTo-SecureString -String $env:GITHUB_TOKEN -AsPlainText -Force
-            ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken -Version $version
+            
+            # Only pass -Version parameter if we have a value
+            if ([string]::IsNullOrEmpty($version)) {
+              ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken
+            } else {
+              ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken -Version $version
+            }
           } catch {
             $registryUri = 'https://nuget.pkg.github.com/GrexyLoco/index.json'
+            
+            # Use manifest version for error summary if no version was provided
+            if ([string]::IsNullOrEmpty($version)) {
+              $manifestPath = 'K.PSGallery.PackageRepoProvider.GitHub.psd1'
+              $manifest = Import-PowerShellDataFile -Path $manifestPath
+              $version = $manifest.ModuleVersion
+            }
+            
             ./.github/scripts/Write-ErrorSummary.ps1 -ErrorMessage $_.Exception.Message -Version $version -RegistryUri $registryUri
             throw
           }
