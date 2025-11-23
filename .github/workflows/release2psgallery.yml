@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g., 0.1.0). Leave empty to use Smartagr for automatic versioning.'
+        description: 'Version to publish (e.g., 0.1.0). Leave empty to auto-determine from K.Action.NextVersion.'
         required: false
         type: string
 
@@ -28,13 +28,6 @@ jobs:
         with:
           repository: GrexyLoco/K.PSGallery.PackageRepoProvider
           path: K.PSGallery.PackageRepoProvider
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Checkout Smartagr (Release Automation)
-        uses: actions/checkout@v4
-        with:
-          repository: GrexyLoco/K.PSGallery.Smartagr
-          path: K.PSGallery.Smartagr
           token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Initialize Environment
@@ -61,30 +54,47 @@ jobs:
           cd K.PSGallery.PackageRepoProvider.GitHub
           ./.github/scripts/Install-FromLocal.ps1
       
+      - name: Determine Next Version
+        id: next-version
+        uses: GrexyLoco/K.Action.NextVersion@v1
+        if: github.event.inputs.version == ''
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Publish to GitHub Packages
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Determine version (optional - Smartagr will determine if not provided)
+          # Determine version from input, release tag, or K.Action.NextVersion
           $version = "${{ github.event.inputs.version }}"
           if ([string]::IsNullOrEmpty($version)) {
             $version = "${{ github.event.release.tag_name }}".TrimStart('v')
           }
+          if ([string]::IsNullOrEmpty($version)) {
+            $version = "${{ steps.next-version.outputs.version }}"
+          }
+          
+          if ([string]::IsNullOrEmpty($version)) {
+            throw "Version could not be determined. Ensure either workflow_dispatch includes a version or release has a tag_name."
+          }
+          
+          Write-Host "Publishing version: $version"
           
           cd K.PSGallery.PackageRepoProvider.GitHub
           
           try {
             $secureToken = ConvertTo-SecureString -String $env:GITHUB_TOKEN -AsPlainText -Force
-            
-            # Pass version only if it's not empty, otherwise let Smartagr determine it
-            if (-not [string]::IsNullOrEmpty($version)) {
-              ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken -Version $version
-            } else {
-              ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken
-            }
+            ./.github/scripts/Publish-ToGitHubPackages.ps1 -SecureToken $secureToken -Version $version
           } catch {
             $registryUri = 'https://nuget.pkg.github.com/GrexyLoco/index.json'
             ./.github/scripts/Write-ErrorSummary.ps1 -ErrorMessage $_.Exception.Message -Version $version -RegistryUri $registryUri
             throw
           }
+      
+      - name: Create Release with Smartagr
+        uses: GrexyLoco/K.PSGallery.Smartagr@v1
+        if: success()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ steps.next-version.outputs.version || github.event.inputs.version || github.event.release.tag_name }}
