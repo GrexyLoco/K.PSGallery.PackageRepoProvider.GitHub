@@ -2,7 +2,7 @@
 .SYNOPSIS
     Initialize GitHub Actions environment for GitHub Provider pipeline
 .DESCRIPTION
-    Installs PSResourceGet preview, SecretManagement, and PSScriptAnalyzer modules required for the pipeline
+    Installs PSResourceGet preview required for publishing
 #>
 [CmdletBinding()]
 param()
@@ -29,34 +29,11 @@ function Install-PSResourceGetPreview {
     Write-Information "✅ PSResourceGet preview installed"
 }
 
-function Install-SecretManagement {
-    [CmdletBinding()]
-    param()
-    
-    Write-Information "🔐 Installing SecretManagement modules..."
-    Install-PSResource -Name Microsoft.PowerShell.SecretManagement -Repository PSGallery -Scope CurrentUser -TrustRepository -Verbose
-    Install-PSResource -Name SecretManagement.JustinGrote.CredMan -Repository PSGallery -Scope CurrentUser -TrustRepository -Verbose
-    
-    Write-Information "✅ SecretManagement installed"
-}
-
-function Install-PSScriptAnalyzer {
-    [CmdletBinding()]
-    param()
-    
-    Write-Information "🔍 Installing PSScriptAnalyzer..."
-    Install-PSResource -Name PSScriptAnalyzer -Repository PSGallery -Scope CurrentUser -TrustRepository -Verbose
-    
-    Write-Information "✅ PSScriptAnalyzer installed"
-}
-
 try {
     Write-Information "🚀 Initializing GitHub Provider Pipeline Environment"
     Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
     Install-PSResourceGetPreview
-    Install-SecretManagement
-    Install-PSScriptAnalyzer
     
     Write-Information ""
     Write-Information "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
