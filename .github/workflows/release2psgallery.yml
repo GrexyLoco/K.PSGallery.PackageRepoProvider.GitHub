@@ -62,6 +62,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Publish to GitHub Packages
+        id: publish
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -80,6 +81,7 @@ jobs:
           }
           
           Write-Host "Publishing version: $version"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
           
           cd K.PSGallery.PackageRepoProvider.GitHub
           
@@ -97,4 +99,4 @@ jobs:
         if: success() && github.event_name != 'release'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ steps.next-version.outputs.version || github.event.inputs.version }}
+          version: ${{ steps.publish.outputs.version }}
