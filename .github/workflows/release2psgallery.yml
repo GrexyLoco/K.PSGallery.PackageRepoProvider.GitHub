@@ -162,21 +162,11 @@ jobs:
         if: steps.determine-version.outputs.should-release == 'true'
         shell: pwsh
         run: |
-          $newVersion = '${{ steps.determine-version.outputs.final-version }}'
-          $psd1 = Get-ChildItem -Filter '*.psd1' -File | Select-Object -First 1
-          
-          if ($psd1) {
-            Write-Output "📝 Updating $($psd1.Name) to version $newVersion"
-            Update-ModuleManifest -Path $psd1.FullName -ModuleVersion $newVersion
-            
-            git config user.name "${{ env.RELEASE_AUTHOR }}"
-            git config user.email "${{ env.RELEASE_EMAIL }}"
-            git add $psd1.Name
-            git commit -m "🔖 Update module version to $newVersion [skip ci]"
-            git push origin ${{ github.ref_name }}
-            
-            Write-Output "✅ Version updated and committed" >> $env:GITHUB_STEP_SUMMARY
-          }
+          ./.github/scripts/Update-ManifestVersion.ps1 `
+            -NewVersion '${{ steps.determine-version.outputs.final-version }}' `
+            -GitUserName '${{ env.RELEASE_AUTHOR }}' `
+            -GitUserEmail '${{ env.RELEASE_EMAIL }}' `
+            -BranchName '${{ github.ref_name }}'
 
       - name: 🔄 Re-fetch after version update
         if: steps.determine-version.outputs.should-release == 'true'
