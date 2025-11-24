@@ -99,7 +99,7 @@ jobs:
 
       - name: 🧪 Validate PowerShell Module
         id: validation
-        uses: GrexyLoco/K.Actions.PSModuleValidation@v1
+        uses: GrexyLoco/K.Actions.PSModuleValidation@v1.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           module-name: ${{ steps.discover-module.outputs.module-name }}
@@ -146,31 +146,10 @@ jobs:
         id: determine-version
         shell: pwsh
         run: |
-          $manualVersion = '${{ github.event.inputs.version }}'
-          $autoBumpType = '${{ steps.next-version.outputs.bumpType }}'
-          $autoNewVersion = '${{ steps.next-version.outputs.newVersion }}'
-          
-          if ($manualVersion) {
-            Write-Output "🎯 Manual version override: $manualVersion"
-            "final-version=$manualVersion" >> $env:GITHUB_OUTPUT
-            "should-release=true" >> $env:GITHUB_OUTPUT
-            "## 📌 Manual Version Override" >> $env:GITHUB_STEP_SUMMARY
-            "**Override Version:** ``$manualVersion``" >> $env:GITHUB_STEP_SUMMARY
-          } else {
-            Write-Output "🔍 Auto-detected: $autoNewVersion ($autoBumpType)"
-            "final-version=$autoNewVersion" >> $env:GITHUB_OUTPUT
-            
-            if ($autoBumpType -eq 'none') {
-              "should-release=false" >> $env:GITHUB_OUTPUT
-              "## 🔁 No Release Required" >> $env:GITHUB_STEP_SUMMARY
-              "No version changes detected." >> $env:GITHUB_STEP_SUMMARY
-            } else {
-              "should-release=true" >> $env:GITHUB_OUTPUT
-              "## ⬆️ Version Bump Detected" >> $env:GITHUB_STEP_SUMMARY
-              "**Bump Type:** ``$autoBumpType``" >> $env:GITHUB_STEP_SUMMARY
-              "**New Version:** ``$autoNewVersion``" >> $env:GITHUB_STEP_SUMMARY
-            }
-          }
+          ./.github/scripts/Get-NextVersion.ps1 `
+            -ManualVersion '${{ github.event.inputs.version }}' `
+            -AutoBumpType '${{ steps.next-version.outputs.bumpType }}' `
+            -AutoNewVersion '${{ steps.next-version.outputs.newVersion }}'
 
       - name: 🛑 Skip if no changes
         if: steps.determine-version.outputs.should-release == 'false'
